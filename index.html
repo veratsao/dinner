@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統</title>
+    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -29,7 +29,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
-            padding: 30px 20px;
+            padding: 15px 10px; /* 手機端兩側縮小留白，釋放更多空間 */
         }
 
         .container {
@@ -39,28 +39,39 @@
 
         header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column; /* 手機端標題與備份按鈕上下排列 */
+            gap: 12px;
             border-bottom: 2px solid var(--text-main);
             padding-bottom: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 500;
             letter-spacing: 1px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .backup-btns {
+            display: flex;
+            gap: 8px;
+            width: 100%;
         }
 
         .backup-btns button {
+            flex: 1; /* 手機端按鈕平分寬度，方便點擊 */
             background: none;
             border: 1px solid var(--text-main);
             color: var(--text-main);
-            padding: 6px 12px;
+            padding: 10px 12px; /* 增加點擊高度 */
             cursor: pointer;
             font-size: 13px;
-            margin-left: 8px;
             transition: all 0.2s;
+            text-align: center;
+            border-radius: 4px;
         }
 
         .backup-btns button:hover {
@@ -68,33 +79,45 @@
             color: #fff;
         }
 
+        /* 導覽列手機端滑動設計 */
         .nav-tabs {
             display: flex;
-            gap: 10px;
+            gap: 5px;
             margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto; /* 超出時橫向滾動 */
+            white-space: nowrap; /* 確保不換行 */
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 5px;
+        }
+
+        /* 隱藏滾動條 */
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .tab-btn {
             background: none;
             border: none;
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
             color: var(--text-muted);
-            padding: 8px 16px;
+            padding: 10px 14px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
+            flex-shrink: 0; /* 防止按鈕被擠壓變形 */
         }
 
         .tab-btn.active {
             color: var(--text-main);
-            border-bottom: 2px solid var(--text-main);
+            border-bottom: 3px solid var(--text-main);
         }
 
         .panel {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            padding: 25px;
-            border-radius: 4px;
+            padding: 15px; /* 手機端內距微調，避免浪費空間 */
+            border-radius: 6px;
             display: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
@@ -104,40 +127,43 @@
         }
 
         h2 {
-            font-size: 18px;
-            margin-bottom: 20px;
+            font-size: 16px;
+            margin-bottom: 15px;
             font-weight: 500;
             color: var(--text-main);
             border-left: 3px solid var(--muji-red);
-            padding-left: 10px;
+            padding-left: 8px;
         }
 
         h3 {
-            font-size: 15px;
+            font-size: 14px;
             margin: 15px 0 10px 0;
             font-weight: 500;
         }
 
         .form-group {
             margin-bottom: 15px;
+            width: 100%;
         }
 
         label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 6px;
             color: var(--text-main);
+            font-weight: 500;
         }
 
         input[type="text"], input[type="number"], input[type="date"], select, textarea {
             width: 100%;
-            padding: 8px 12px;
+            padding: 10px 12px; /* 增加點擊內距 */
             border: 1px solid var(--border-color);
             background-color: var(--hover-bg);
             color: var(--text-main);
             font-size: 14px;
-            border-radius: 2px;
+            border-radius: 4px;
             outline: none;
+            -webkit-appearance: none; /* 清除 iOS 預設樣式 */
         }
 
         input:focus, select:focus, textarea:focus {
@@ -148,51 +174,66 @@
             background-color: var(--text-main);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 12px 18px; /* 加大手機觸控範圍 */
             cursor: pointer;
             font-size: 14px;
-            border-radius: 2px;
+            border-radius: 4px;
             transition: opacity 0.2s;
+            width: 100%; /* 手機端按鈕預設滿版，更易點擊 */
+            text-align: center;
         }
 
         .btn:hover { opacity: 0.9; }
         .btn-danger { background-color: var(--muji-red); }
+        
         .btn-sm {
-            padding: 4px 8px;
+            width: auto; /* 小按鈕維持寬度不強制滿版 */
+            padding: 6px 12px;
             font-size: 12px;
             background-color: transparent;
             color: var(--text-main);
             border: 1px solid var(--border-color);
         }
 
+        /* 數據卡片手機端單欄排版 */
         .summary-cards {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
+            grid-template-columns: 1fr; /* 手機端一律單欄 */
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .card {
             background: var(--hover-bg);
             border: 1px solid var(--border-color);
-            padding: 15px;
+            padding: 12px;
             text-align: center;
-            border-radius: 2px;
+            border-radius: 4px;
         }
 
-        .card .title { font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
-        .card .value { font-size: 22px; font-weight: bold; }
+        .card .title { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+        .card .value { font-size: 18px; font-weight: bold; }
+
+        /* 表格響應式滾動容器，防止破壞版面 */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
+            font-size: 13px;
+            min-width: 500px; /* 確保表格內容有足夠寬度展示，不會擠壓折行 */
         }
 
         th, td {
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 10px;
+            padding: 10px 8px;
             text-align: left;
         }
 
@@ -202,21 +243,23 @@
         .status-badge {
             display: inline-block;
             padding: 2px 6px;
-            font-size: 12px;
+            font-size: 11px;
             border-radius: 2px;
         }
         .status-ordered { background: #E8F0E6; color: var(--success); }
         .status-none { background: #F0F0F0; color: var(--text-muted); }
         .status-canceled-paid { background: #F9EBEA; color: var(--muji-red); font-weight: bold; }
 
+        /* 手機端彈性排版，由水平改為垂直 */
         .flex-row {
             display: flex;
-            gap: 15px;
-            align-items: flex-end;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
             margin-bottom: 15px;
         }
 
-        .search-box { margin-bottom: 20px; }
+        .search-box { margin-bottom: 15px; }
 
         .history-log {
             max-height: 150px;
@@ -224,28 +267,31 @@
             background: var(--hover-bg);
             padding: 10px;
             border: 1px solid var(--border-color);
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             margin-bottom: 15px;
+            border-radius: 4px;
         }
 
+        /* 帳務計算機手機排版 */
         .billing-calculator {
             background-color: var(--notice-bg);
             border: 1px dashed var(--text-muted);
             padding: 15px;
             margin: 15px 0;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: 1fr; /* 手機端改單欄，避免數據擠壓換行 */
+            gap: 12px;
             border-radius: 4px;
         }
 
-        .calc-item { font-size: 14px; }
-        .calc-item span { font-weight: bold; font-size: 16px; }
+        .calc-item { font-size: 13px; }
+        .calc-item span { font-weight: bold; font-size: 15px; }
 
+        /* 月曆容器優化 */
         .calendar-container {
             border: 1px solid var(--border-color);
-            padding: 15px;
+            padding: 10px;
             background: var(--hover-bg);
             border-radius: 4px;
             margin-bottom: 20px;
@@ -253,32 +299,46 @@
 
         .calendar-header {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column; /* 月曆導覽按鈕手機端上下排列，確保容易點選 */
+            gap: 10px;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+        }
+
+        .calendar-header > div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            gap: 5px;
+        }
+
+        .calendar-header .btn-sm {
+            flex: 1; /* 月曆切換與全選按鈕平分寬度 */
+            text-align: center;
         }
 
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+            gap: 3px;
             text-align: center;
         }
 
         .calendar-weekday {
             font-weight: 500;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
 
         .calendar-day {
             background: #fff;
             border: 1px solid var(--border-color);
-            padding: 10px 0;
+            padding: 8px 0; /* 微調內距防止手機畫面塞滿 */
             cursor: pointer;
-            font-size: 14px;
-            border-radius: 2px;
+            font-size: 13px;
+            border-radius: 4px;
             user-select: none;
         }
 
@@ -287,34 +347,34 @@
 
         .student-checkbox-list {
             border: 1px solid var(--border-color);
-            padding: 15px;
-            max-height: 200px;
+            padding: 12px;
+            max-height: 180px;
             overflow-y: auto;
             background: #fff;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            border-radius: 2px;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* 手機端格狀寬度最佳化 */
+            gap: 8px;
+            border-radius: 4px;
         }
 
         .student-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 6px;
+            font-size: 13px;
             cursor: pointer;
         }
 
-        .student-item input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--muji-red); }
+        .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
 
-        /* 網頁預覽繳費單樣式設定 */
+        /* 網頁預覽繳費單樣式設定：手機版網頁改單欄展示，確保 scannability；列印時強制維持 A4 雙欄 */
         .print-preview-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            grid-template-columns: 1fr; /* 手機端網頁預覽改單欄 */
+            gap: 12px;
             background: #fff;
-            padding: 10px;
-            border: 1px solid var(--border-color);
+            padding: 0;
+            border: none;
             justify-content: start;
             align-content: start;
         }
@@ -330,6 +390,8 @@
             color: #000;
             font-size: 12px;
             overflow: hidden;
+            margin: 0 auto; /* 居中展示 */
+            max-width: 380px; /* 限制手機端預覽的最大寬度，不影響列印 */
         }
 
         .bill-left {
@@ -379,6 +441,64 @@
             line-height: 1.2;
         }
 
+        /* 桌上型電腦/平板等大螢幕優化：寬度大於 768px 時套用雙欄或更寬的排版 */
+        @media (min-width: 768px) {
+            body {
+                padding: 30px 20px;
+            }
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .backup-btns {
+                width: auto;
+            }
+            .backup-btns button {
+                flex: none;
+                width: auto;
+            }
+            .panel {
+                padding: 25px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            .btn {
+                width: auto;
+            }
+            .summary-cards {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+            .flex-row {
+                flex-direction: row;
+                align-items: flex-end;
+            }
+            .billing-calculator {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .calendar-header {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .calendar-header > div {
+                width: auto;
+            }
+            .calendar-header .btn-sm {
+                flex: none;
+            }
+            .print-preview-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .bill-card {
+                max-width: none;
+                margin: 0;
+            }
+        }
+
+        /* 絕對不要變動的原有列印樣式：確保 A4 輸出完全精準不跑版 */
         @media print {
             html, body {
                 background: #fff !important;
@@ -419,6 +539,8 @@
                 height: 57mm !important; 
                 page-break-inside: avoid !important;
                 box-sizing: border-box !important;
+                max-width: none !important;
+                margin: 0 !important;
             }
             @page {
                 size: A4 portrait;
@@ -455,11 +577,13 @@
                 <label>選擇觀看日期</label>
                 <input type="date" id="overview-date" onchange="renderDailyOverview()">
             </div>
-            <div class="form-group" style="width: 150px;">
+            <div class="form-group" style="flex: 1;">
                 <label>當日單價 ($)</label>
                 <input type="number" id="daily-price" value="70">
             </div>
-            <button class="btn" style="margin-bottom: 15px;" onclick="saveDailyPrice()">儲存今日單價</button>
+            <div style="width: 100%;">
+                <button class="btn" style="margin-bottom: 15px;" onclick="saveDailyPrice()">儲存今日單價</button>
+            </div>
         </div>
 
         <div class="summary-cards">
@@ -469,38 +593,40 @@
         </div>
 
         <h3 style="color:var(--success)">當日訂餐名單 (僅顯示有訂餐/已付款取消學生)</h3>
-        <table id="daily-table">
-            <thead>
-                <tr><th>系統代碼</th><th>姓名</th><th>預訂狀態</th><th>備註</th><th>操作</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="daily-table">
+                <thead>
+                    <tr><th>系統代碼</th><th>姓名</th><th>預訂狀態</th><th>備註</th><th>操作</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- 2. 學生管理 -->
     <div id="tab-students" class="panel">
         <h2>學生名單管理</h2>
-        <div class="flex-row" style="background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:2px;">
+        <div class="flex-row" style="background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:4px;">
             <div style="flex:1;">
                 <label>個別新增：學生姓名</label>
                 <input type="text" id="new-name" placeholder="例如: 王小明">
             </div>
             <div style="flex:1;">
-                <label>自訂號碼/學號 (選填)</label>
-                <input type="text" id="new-id" placeholder="留空則由系統自動編號">
+                <label>自訂號碼 (選填)</label>
+                <input type="text" id="new-id" placeholder="留空則自動編號">
             </div>
             <button class="btn" onclick="addSingleStudent()">新增學生</button>
         </div>
 
-        <div class="form-group" style="margin-top: 15px; background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:2px;">
+        <div class="form-group" style="margin-top: 15px; background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:4px;">
             <label><strong>批次匯入學生名單</strong></label>
-            <div style="margin-bottom: 8px; font-size:13px; color:var(--text-muted);">
-                請選擇匯入模式：
-                <label style="display:inline; margin-right:15px; cursor:pointer;"><input type="radio" name="import-mode" value="name-only" checked onclick="toggleImportPlaceholder(this.value)"> 模式A：純姓名 (每行一名)</label>
-                <label style="display:inline; cursor:pointer;"><input type="radio" name="import-mode" value="id-name" onclick="toggleImportPlaceholder(this.value)"> 模式B：號碼+姓名同步建立 (格式：號碼 空格 姓名)</label>
+            <div style="margin-bottom: 12px; font-size:13px; color:var(--text-muted); line-height: 1.5;">
+                請選擇匯入模式：<br>
+                <label style="display:inline-block; margin-right:15px; margin-top: 5px; cursor:pointer;"><input type="radio" name="import-mode" value="name-only" checked onclick="toggleImportPlaceholder(this.value)"> 模式A：純姓名 (每行一名)</label><br>
+                <label style="display:inline-block; margin-top: 5px; cursor:pointer;"><input type="radio" name="import-mode" value="id-name" onclick="toggleImportPlaceholder(this.value)"> 模式B：號碼+姓名 (格式：號碼 空格 姓名)</label>
             </div>
             <textarea id="batch-students-input" rows="5" placeholder="林大林&#10;陳小美&#10;王阿明"></textarea>
-            <button class="btn" style="margin-top:8px;" onclick="addBatchStudents()">執行批次匯入</button>
+            <button class="btn" style="margin-top:10px;" onclick="addBatchStudents()">執行批次匯入</button>
         </div>
 
         <hr style="border:0; border-top:1px solid var(--border-color); margin:20px 0;">
@@ -510,10 +636,12 @@
             <input type="text" id="search-student-input" oninput="renderStudentList()" placeholder="請輸入關鍵字...">
         </div>
 
-        <table id="student-table">
-            <thead><tr><th>系統代碼</th><th>學生姓名</th><th>操作</th></tr></thead>
-            <tbody></tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="student-table">
+                <thead><tr><th>系統代碼</th><th>學生姓名</th><th>操作</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- 3. 批次預訂功能 -->
@@ -525,22 +653,22 @@
             <div class="calendar-header">
                 <div>
                     <button class="btn btn-sm" onclick="changeBatchMonth(-1)">◀ 上個月</button>
-                    <span id="calendar-month-title" style="font-weight:bold; font-size:16px; margin: 0 10px;"></span>
+                    <span id="calendar-month-title" style="font-weight:bold; font-size:15px; margin: 0 10px;"></span>
                     <button class="btn btn-sm" onclick="changeBatchMonth(1)">下個月 ▶</button>
                 </div>
                 <div>
-                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日 (一~五)</button>
+                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日</button>
                     <button class="btn btn-sm" style="background-color:var(--muji-red); color:#fff;" onclick="selectWeekdays(false)">取消平日</button>
                 </div>
             </div>
             <div class="calendar-grid" id="batch-calendar-grid"></div>
-            <div style="margin-top: 10px; font-size:13px; color:var(--muji-red);" id="selected-dates-count">已選取：0 個日期</div>
+            <div style="margin-top: 12px; font-size:13px; color:var(--muji-red); text-align: center;" id="selected-dates-count">已選取：0 個日期</div>
         </div>
 
         <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <label style="margin-bottom:0;"><strong>選擇訂餐學生</strong></label>
-                <div>
+                <div style="display: flex; gap: 5px;">
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(true)">全選</button>
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(false)">全不選</button>
                 </div>
@@ -553,22 +681,22 @@
             <input type="text" id="batch-action-note" placeholder="如：排骨飯、不要辣...（選填）">
         </div>
 
-        <div style="margin-top:25px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-            <button class="btn" onclick="executeBatchAction(true)" style="background-color: var(--success); padding: 10px 20px;">批次預訂</button>
-            <button class="btn btn-danger" onclick="executeBatchAction(false)" style="padding: 10px 20px; margin-left: 10px;">批次取消</button>
-            <button class="btn btn-sm" style="margin-left:15px;" onclick="clearBatchSelection()">重置選取</button>
+        <div class="flex-row" style="margin-top:20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <button class="btn" onclick="executeBatchAction(true)" style="background-color: var(--success);">批次預訂</button>
+            <button class="btn btn-danger" onclick="executeBatchAction(false)">批次取消</button>
+            <button class="btn btn-sm" style="width: 100%; border: 1px solid var(--text-muted); color: var(--text-muted);" onclick="clearBatchSelection()">重置選取</button>
         </div>
     </div>
 
     <!-- 4. 繳費與跨月核銷頁面 -->
     <div id="tab-billing" class="panel">
         <h2>學生繳費與跨月核銷管理</h2>
-        <div class="search-box" style="background: var(--hover-bg); padding:15px; border:1px solid var(--border-color); display: flex; gap: 15px; align-items: flex-end;">
-            <div style="flex:2;">
+        <div class="search-box" style="background: var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius: 4px; display: flex; flex-direction: column; gap: 12px;">
+            <div>
                 <label><strong>1. 選擇查核學生</strong></label>
                 <select id="billing-student-select" onchange="renderStudentBilling()"></select>
             </div>
-            <div style="flex:1;">
+            <div>
                 <label><strong>2. 結算月份篩選</strong></label>
                 <select id="billing-month-filter" onchange="renderStudentBilling()">
                     <option value="2026-05">2026 年 05 月</option>
@@ -579,7 +707,7 @@
             </div>
         </div>
 
-        <div id="billing-detail-area" style="margin-top:20px; display:none; border:1px solid var(--border-color); padding:20px; background:#fff; margin-bottom:30px;">
+        <div id="billing-detail-area" style="margin-top:20px; display:none; border:1px solid var(--border-color); padding:15px; background:#fff; margin-bottom:30px; border-radius: 4px;">
             <h3 id="billing-student-title">學生：</h3>
             <div class="billing-calculator">
                 <div class="calc-item">
@@ -588,52 +716,56 @@
                 </div>
                 <div class="calc-item">
                     <p style="color:var(--muji-red); font-size:12px;">B. 跨月留存異動/多退少補 (上月結轉)</p>
-                    <span id="billing-balance-adjustment" style="font-size: 16px; font-weight: bold;">0</span> 元
+                    <span id="billing-balance-adjustment" style="font-size: 15px; font-weight: bold;">0</span> 元
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="calc-last-month-detail">(上月已繳$0 - 費用$0)</div>
                 </div>
-                <div class="calc-item" style="border-left:1px solid var(--border-color); padding-left:15px;">
+                <div class="calc-item">
                     <p style="color:var(--success); font-size:12px; font-weight:bold;">C. 本月最終建議應繳 (A - B)</p>
                     <span id="calc-final-total" style="color:var(--muji-red); font-size:20px;">$0</span> 元
                 </div>
             </div>
 
-            <div class="flex-row" style="margin-top:15px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 150px;">
+            <div class="flex-row" style="margin-top:15px;">
+                <div>
                     <label>繳費狀態</label>
                     <select id="billing-status-select">
                         <option value="false">未繳費</option>
                         <option value="true">已繳費</option>
                     </select>
                 </div>
-                <div style="flex: 1; min-width: 150px;">
+                <div>
                     <label>本月實際收取金額 ($)</label>
                     <input type="number" id="billing-amount-input" value="0">
                 </div>
-                <div style="flex: 2; min-width: 200px;">
+                <div>
                     <label>本月內部帳務備註 (此處不顯示於繳費單)</label>
                     <input type="text" id="billing-note-input" placeholder="例如：媽媽轉帳、現金付清...">
                 </div>
                 <button class="btn" style="background-color: var(--success);" onclick="saveStudentBilling()">儲存本月帳務</button>
             </div>
 
-            <h4 style="margin-top:15px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">該生付款後取消明細：</h4>
-            <table id="canceled-paid-table">
-                <thead><tr><th>取消日期</th><th>狀態備註</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">該生付款後取消明細：</h4>
+            <div class="table-responsive">
+                <table id="canceled-paid-table">
+                    <thead><tr><th>取消日期</th><th>狀態備註</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
         
-        <div style="background: var(--hover-bg); border: 1px solid var(--border-color); padding: 20px; border-radius: 4px; margin-bottom: 25px;">
+        <div style="background: var(--hover-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; margin-bottom: 25px;">
             <h3 style="margin-top:0; color:var(--success);">🔍 已繳費學生快速查閱台</h3>
             <div class="form-group" style="margin-top:10px;">
                 <input type="text" id="search-paid-input" oninput="renderPaidStudentsList()" placeholder="輸入姓名或代碼篩選已繳費名單...">
             </div>
-            <table style="background:#fff;" id="paid-students-table">
-                <thead>
-                    <tr><th>結算月份</th><th>代碼/號碼</th><th>姓名</th><th>已收金額</th><th>內部備註</th><th>繳費日期/時間</th><th>快速連動</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table style="background:#fff;" id="paid-students-table">
+                    <thead>
+                        <tr><th>結算月份</th><th>代碼/號碼</th><th>姓名</th><th>已收金額</th><th>內部備註</th><th>繳費日期/時間</th><th>快速連動</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
 
         <h3>全班付款後取消歷史總誌</h3>
@@ -644,7 +776,7 @@
     <div id="tab-print-view" class="panel">
         <div class="print-actions" style="background: var(--hover-bg); padding: 15px; border:1px solid var(--border-color); margin-bottom: 20px; border-radius: 4px;">
             <h2>批次列印繳費單設定</h2>
-            <div class="flex-row">
+            <div class="flex-row" style="margin-bottom: 15px;">
                 <div style="flex: 1;">
                     <label><strong>選擇列印月份</strong></label>
                     <select id="print-month-filter" onchange="generatePrintBills()">
@@ -654,15 +786,15 @@
                         <option value="2026-08">2026 年 08 月</option>
                     </select>
                 </div>
-                <div style="flex: 2; text-align: right;">
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">※ 提示：少於 10 人時，收據將依序靠齊排列，剩餘區塊自動留空於下方。</p>
-                    <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); padding: 10px 20px; font-weight: bold;">直接啟動列印流程</button>
+                <div style="text-align: left; width: 100%;">
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height: 1.4;">※ 提示：少於 10 人時，收據將依序靠齊排列，剩餘區塊自動留空於下方。</p>
+                    <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold;">直接啟動列印流程</button>
                 </div>
             </div>
             <div class="form-group" style="margin-top:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <label style="margin-bottom:0;"><strong>勾選欲產生的學生名單</strong></label>
-                    <div>
+                    <div style="display: flex; gap: 5px;">
                         <button class="btn btn-sm" onclick="togglePrintAllStudents(true)">全選</button>
                         <button class="btn btn-sm" onclick="togglePrintAllStudents(false)">全不選</button>
                     </div>
@@ -671,6 +803,7 @@
             </div>
         </div>
 
+        <!-- 手機端預覽呈現單欄排版，而桌機或啟動列印時，將透過 CSS 強制切回精確的 210mm A4 規格雙欄排版 -->
         <div class="print-preview-container" id="bill-print-output-zone"></div>
     </div>
 
@@ -835,8 +968,8 @@
                 <td style="color:var(--text-muted); font-size:13px;">${orderNote}</td>
                 <td>
                     ${isOrdered ? 
-                        `<button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="toggleOrder('${dateStr}', '${student.id}', false)">取消</button>` : 
-                        `<button class="btn" style="padding:4px 8px; font-size:12px; background-color:var(--success);" onclick="toggleOrder('${dateStr}', '${student.id}', true)">個別預訂</button>`
+                        `<button class="btn btn-danger btn-sm" onclick="toggleOrder('${dateStr}', '${student.id}', false)">取消</button>` : 
+                        `<button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="toggleOrder('${dateStr}', '${student.id}', true)">個別預訂</button>`
                     }
                 </td>
             `;
@@ -897,7 +1030,7 @@
         Object.values(db.students).forEach(student => {
             if (keyword && !student.id.toLowerCase().includes(keyword) && !student.name.toLowerCase().includes(keyword)) return;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${student.id}</td><td>${student.name}</td><td><button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="deleteStudent('${student.id}')">刪除</button></td>`;
+            tr.innerHTML = `<td>${student.id}</td><td>${student.name}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${student.id}')">刪除</button></td>`;
             tbody.appendChild(tr);
         });
     }
