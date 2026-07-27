@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ v10 </title>
+    <title>晚餐預訂系統</title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -29,7 +29,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
-            padding: 15px 10px; /* 手機端兩側縮小留白，釋放更多空間 */
+            padding: 15px 10px;
         }
 
         .container {
@@ -39,7 +39,7 @@
 
         header {
             display: flex;
-            flex-direction: column; /* 手機端標題與備份按鈕上下排列 */
+            flex-direction: column;
             gap: 12px;
             border-bottom: 2px solid var(--text-main);
             padding-bottom: 15px;
@@ -62,11 +62,11 @@
         }
 
         .backup-btns button {
-            flex: 1; /* 手機端按鈕平分寬度，方便點擊 */
+            flex: 1;
             background: none;
             border: 1px solid var(--text-main);
             color: var(--text-main);
-            padding: 10px 12px; /* 增加點擊高度 */
+            padding: 10px 12px;
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
@@ -79,19 +79,17 @@
             color: #fff;
         }
 
-        /* 導覽列手機端滑動設計 */
         .nav-tabs {
             display: flex;
             gap: 5px;
             margin-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
-            overflow-x: auto; /* 超出時橫向滾動 */
-            white-space: nowrap; /* 確保不換行 */
+            overflow-x: auto;
+            white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 5px;
         }
 
-        /* 隱藏滾動條 */
         .nav-tabs::-webkit-scrollbar {
             display: none;
         }
@@ -105,7 +103,7 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            flex-shrink: 0; /* 防止按鈕被擠壓變形 */
+            flex-shrink: 0;
         }
 
         .tab-btn.active {
@@ -116,7 +114,7 @@
         .panel {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            padding: 15px; /* 手機端內距微調，避免浪費空間 */
+            padding: 15px;
             border-radius: 6px;
             display: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
@@ -156,14 +154,14 @@
 
         input[type="text"], input[type="number"], input[type="date"], select, textarea {
             width: 100%;
-            padding: 10px 12px; /* 增加點擊內距 */
+            padding: 10px 12px;
             border: 1px solid var(--border-color);
             background-color: var(--hover-bg);
             color: var(--text-main);
             font-size: 14px;
             border-radius: 4px;
             outline: none;
-            -webkit-appearance: none; /* 清除 iOS 預設樣式 */
+            -webkit-appearance: none;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -174,12 +172,12 @@
             background-color: var(--text-main);
             color: white;
             border: none;
-            padding: 12px 18px; /* 加大手機觸控範圍 */
+            padding: 12px 18px;
             cursor: pointer;
             font-size: 14px;
             border-radius: 4px;
             transition: opacity 0.2s;
-            width: 100%; /* 手機端按鈕預設滿版，更易點擊 */
+            width: 100%;
             text-align: center;
         }
 
@@ -187,7 +185,7 @@
         .btn-danger { background-color: var(--muji-red); }
         
         .btn-sm {
-            width: auto; /* 小按鈕維持寬度不強制滿版 */
+            width: auto;
             padding: 6px 12px;
             font-size: 12px;
             background-color: transparent;
@@ -195,10 +193,9 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 數據卡片手機端單欄排版 */
         .summary-cards {
             display: grid;
-            grid-template-columns: 1fr; /* 手機端一律單欄 */
+            grid-template-columns: 1fr;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -214,7 +211,6 @@
         .card .title { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
         .card .value { font-size: 18px; font-weight: bold; }
 
-        /* 表格響應式滾動容器，防止破壞版面 */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -228,7 +224,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            min-width: 500px; /* 確保表格內容有足夠寬度展示，不會擠壓折行 */
+            min-width: 500px;
         }
 
         th, td {
@@ -250,7 +246,6 @@
         .status-none { background: #F0F0F0; color: var(--text-muted); }
         .status-canceled-paid { background: #F9EBEA; color: var(--muji-red); font-weight: bold; }
 
-        /* 手機端彈性排版，由水平改為垂直 */
         .flex-row {
             display: flex;
             flex-direction: column;
@@ -273,14 +268,13 @@
             border-radius: 4px;
         }
 
-        /* 帳務計算機手機排版 */
         .billing-calculator {
             background-color: var(--notice-bg);
             border: 1px dashed var(--text-muted);
             padding: 15px;
             margin: 15px 0;
             display: grid;
-            grid-template-columns: 1fr; /* 手機端改單欄，避免數據擠壓換行 */
+            grid-template-columns: 1fr;
             gap: 12px;
             border-radius: 4px;
         }
@@ -288,7 +282,6 @@
         .calc-item { font-size: 13px; }
         .calc-item span { font-weight: bold; font-size: 15px; }
 
-        /* 月曆容器優化 */
         .calendar-container {
             border: 1px solid var(--border-color);
             padding: 10px;
@@ -299,7 +292,7 @@
 
         .calendar-header {
             display: flex;
-            flex-direction: column; /* 月曆導覽按鈕手機端上下排列，確保容易點選 */
+            flex-direction: column;
             gap: 10px;
             align-items: center;
             margin-bottom: 12px;
@@ -314,7 +307,7 @@
         }
 
         .calendar-header .btn-sm {
-            flex: 1; /* 月曆切換與全選按鈕平分寬度 */
+            flex: 1;
             text-align: center;
         }
 
@@ -335,7 +328,7 @@
         .calendar-day {
             background: #fff;
             border: 1px solid var(--border-color);
-            padding: 8px 0; /* 微調內距防止手機畫面塞滿 */
+            padding: 8px 0;
             cursor: pointer;
             font-size: 13px;
             border-radius: 4px;
@@ -352,7 +345,7 @@
             overflow-y: auto;
             background: #fff;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* 手機端格狀寬度最佳化 */
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 8px;
             border-radius: 4px;
         }
@@ -367,28 +360,33 @@
 
         .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
 
-        /* 網頁預覽繳費單樣式設定：手機版網頁改單欄展示 */
+        /* 列印頁面預覽容器 */
         .print-preview-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .bill-page {
             display: grid;
-            grid-template-columns: 1fr; /* 手機端網頁預覽改單欄 */
+            grid-template-columns: 1fr;
             gap: 12px;
             background: #fff;
-            padding: 0;
-            border: none;
-            justify-content: start;
-            align-content: start;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
         }
 
         .bill-card {
             border: 1px solid #333;
-            padding: 8px 10px;
+            padding: 6px 8px;
             width: 100%;
-            height: 268px;
+            height: 250px;
             display: flex;
             box-sizing: border-box;
             background: #fff;
             color: #000;
-            font-size: 12px;
+            font-size: 11px;
             overflow: hidden;
             margin: 0 auto;
             max-width: 380px;
@@ -397,7 +395,7 @@
         .bill-left {
             width: 45%;
             border-right: 1px dashed #999;
-            padding-right: 8px;
+            padding-right: 6px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -405,40 +403,40 @@
 
         .bill-right {
             width: 55%;
-            padding-left: 8px;
+            padding-left: 6px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
         .bill-student-name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             border-bottom: 1px solid #000;
             padding-bottom: 2px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
-        .bill-title { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
-        .bill-price-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .bill-total-row { border-top: 1px solid #000; padding-top: 4px; margin-top: 5px; font-size: 14px; font-weight: bold; text-align: right; }
+        .bill-title { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+        .bill-price-row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 11px; }
+        .bill-total-row { border-top: 1px solid #000; padding-top: 3px; margin-top: 3px; font-size: 13px; font-weight: bold; text-align: right; }
 
-        .bill-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-top: 4px; }
-        .bill-cal-day { border: 1px solid #ccc; font-size: 10px; height: 18px; line-height: 16px; background: #fff; }
+        .bill-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-top: 3px; }
+        .bill-cal-day { border: 1px solid #ccc; font-size: 9px; height: 16px; line-height: 15px; background: #fff; }
         .bill-cal-day.empty { border: none; background: transparent; }
         .bill-cal-day.has-order { font-weight: bold; border: 1px solid #000; }
         .bill-cal-day.price-75 { background-color: #D3D3D3 !important; }
         .bill-cal-header-text { font-size: 9px; font-weight: bold; color: #555; }
         
         .bill-note-area {
-            font-size: 10px;
-            color: #444;
-            margin-top: 4px;
+            font-size: 9px;
+            color: #333;
+            margin-top: 2px;
             border-top: 1px dotted #ccc;
             padding-top: 2px;
-            height: 34px;
+            height: 32px;
             overflow: hidden;
-            line-height: 1.2;
+            line-height: 1.25;
         }
 
         /* 桌上型電腦/平板等大螢幕優化 */
@@ -456,16 +454,17 @@
             .calendar-header { flex-direction: row; justify-content: space-between; }
             .calendar-header > div { width: auto; }
             .calendar-header .btn-sm { flex: none; }
-            .print-preview-container { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .bill-page { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .bill-card { max-width: none; margin: 0; }
         }
 
-        /* 修正後的列印樣式：確保手機與電腦列印時第 11 位學生必定跳至第二頁頂端 */
+        /* 完美修正手機/電腦瀏覽器列印：一頁絕對 10 張卡片 */
         @media print {
             html, body {
                 background: #fff !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
             }
@@ -488,43 +487,62 @@
                 background: transparent !important;
             }
             
-            /* 將外層 Grid 改為 Block 布局，防止手機瀏覽器忽略分頁指令 */
             .print-preview-container {
                 display: block !important;
                 border: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                width: 198mm !important;
+                width: 100% !important;
             }
-            
-            /* 單個繳費單採用 float 控制左右雙欄 */
-            .bill-card {
-                display: block !important;
-                float: left !important;
-                border: 1px solid #000 !important;
-                width: 96mm !important;
-                height: 56mm !important; 
+
+            /* 實體頁面容器：精確控制 2欄 × 5行，高度268mm安全放進A4紙張 */
+            .bill-page {
+                display: grid !important;
+                grid-template-columns: 96mm 96mm !important;
+                grid-template-rows: repeat(5, 52mm) !important;
+                gap: 2mm 4mm !important;
+                width: 196mm !important;
+                height: 268mm !important;
+                max-height: 268mm !important;
                 box-sizing: border-box !important;
-                margin-right: 3mm !important;
-                margin-bottom: 2mm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                border: none !important;
+                background: #fff !important;
+                overflow: hidden !important;
+                
+                /* 強制跳頁屬性 */
+                page-break-after: always !important;
+                break-after: page !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
 
-            /* 右欄清除浮動 */
-            .bill-card:nth-child(2n) {
-                margin-right: 0 !important;
+            /* 最後一頁取消換頁避免產生多餘空白頁 */
+            .bill-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
 
-            /* 每 10 個小卡片（即第 10、20... 位學生）後面，強制進行換頁 */
-            .bill-card:nth-child(10n) {
-                page-break-after: always !important;
-                break-after: page !important;
+            /* 單張收據精確高度控制 52mm */
+            .bill-card {
+                display: flex !important;
+                border: 1px solid #000 !important;
+                width: 96mm !important;
+                height: 52mm !important;
+                box-sizing: border-box !important;
+                padding: 5px 7px !important;
+                margin: 0 !important;
+                font-size: 10.5px !important;
+                background: #fff !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                overflow: hidden !important;
             }
 
             @page {
                 size: A4 portrait;
-                margin: 6mm 6mm;
+                margin: 8mm 6mm 6mm 6mm;
             }
         }
     </style>
@@ -767,7 +785,7 @@
                     </select>
                 </div>
                 <div style="text-align: left; width: 100%;">
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height: 1.4;">※ 提示：少於 10 人時，收據將依序靠齊排列，剩餘區塊自動留空於下方。</p>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height: 1.4;">※ 提示：系統已建立精確分頁機制，每 10 人精準填滿一張 A4，第 11 人起自動跳至第二頁。</p>
                     <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold;">直接啟動列印流程</button>
                 </div>
             </div>
@@ -1354,6 +1372,7 @@
         generatePrintBills();
     }
 
+    /* 關鍵優化：將卡片按 10 人一組包裹至 .bill-page 實體頁面容器中 */
     function generatePrintBills() {
         const targetMonth = document.getElementById('print-month-filter').value;
         const outputZone = document.getElementById('bill-print-output-zone');
@@ -1362,7 +1381,7 @@
         const selectedIds = Array.from(checkboxes).map(cb => cb.value);
 
         if(selectedIds.length === 0) {
-            outputZone.innerHTML = '<div style="grid-column: span 2; text-align:center; padding: 40px; color:var(--text-muted);">請勾選學生</div>';
+            outputZone.innerHTML = '<div style="text-align:center; padding: 40px; color:var(--text-muted);">請勾選學生</div>';
             return;
         }
 
@@ -1370,7 +1389,16 @@
         const year = parseInt(parts[0]);
         const monthIndex = parseInt(parts[1]) - 1;
 
-        selectedIds.forEach(id => {
+        let currentPageDiv = null;
+
+        selectedIds.forEach((id, index) => {
+            // 每 10 個卡片自動新建一個 .bill-page 實體實體頁面容器
+            if (index % 10 === 0) {
+                currentPageDiv = document.createElement('div');
+                currentPageDiv.className = 'bill-page';
+                outputZone.appendChild(currentPageDiv);
+            }
+
             const student = db.students[id];
             if(!student) return;
 
@@ -1415,10 +1443,10 @@
                     <div class="bill-title">${showMonth} 月餐費單</div>
                     <div class="bill-price-row"><span>70 元</span><span>${count70} 天</span></div>
                     <div class="bill-price-row"><span>75 元</span><span>${count75} 天</span></div>
-                    <div class="bill-price-row" style="color:#555; margin-top:4px; font-size:10px;"><span>上月結餘</span><span>${balanceText}</span></div>
+                    <div class="bill-price-row" style="color:#555; margin-top:2px; font-size:9.5px;"><span>上月結餘</span><span>${balanceText}</span></div>
                 </div>
                 <div class="bill-total-row" style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span style="font-size: 10px; font-weight: normal; color: #000; text-align: left;">萊諾 曹老師</span>
+                    <span style="font-size: 9px; font-weight: normal; color: #000; text-align: left;">萊諾 曹老師</span>
                     <span>應繳 ${finalTotal} 元</span>
                 </div>
             `;
@@ -1474,14 +1502,14 @@
 
             rightDiv.innerHTML = `
                 <div>
-                    <div style="font-weight:bold; font-size:11px; text-align:center;">${showMonth}月份訂餐日曆明細</div>
+                    <div style="font-weight:bold; font-size:10px; text-align:center;">${showMonth}月份訂餐日曆明細</div>
                     ${calGridHTML}
                 </div>
                 <div class="bill-note-area">${noteContent}</div>
             `;
 
             billCard.appendChild(leftDiv); billCard.appendChild(rightDiv);
-            outputZone.appendChild(billCard);
+            currentPageDiv.appendChild(billCard);
         });
     }
 
