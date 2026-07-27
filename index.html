@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
+    <title>晚餐預訂系統 ｜ v10 </title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -367,7 +367,7 @@
 
         .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
 
-        /* 網頁預覽繳費單樣式設定：手機版網頁改單欄展示，確保 scannability；列印時強制維持 A4 雙欄 */
+        /* 網頁預覽繳費單樣式設定：手機版網頁改單欄展示 */
         .print-preview-container {
             display: grid;
             grid-template-columns: 1fr; /* 手機端網頁預覽改單欄 */
@@ -390,8 +390,8 @@
             color: #000;
             font-size: 12px;
             overflow: hidden;
-            margin: 0 auto; /* 居中展示 */
-            max-width: 380px; /* 限制手機端預覽的最大寬度，不影響列印 */
+            margin: 0 auto;
+            max-width: 380px;
         }
 
         .bill-left {
@@ -441,69 +441,33 @@
             line-height: 1.2;
         }
 
-        /* 桌上型電腦/平板等大螢幕優化：寬度大於 768px 時套用雙欄或更寬的排版 */
+        /* 桌上型電腦/平板等大螢幕優化 */
         @media (min-width: 768px) {
-            body {
-                padding: 30px 20px;
-            }
-            header {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .backup-btns {
-                width: auto;
-            }
-            .backup-btns button {
-                flex: none;
-                width: auto;
-            }
-            .panel {
-                padding: 25px;
-            }
-            h2 {
-                font-size: 18px;
-            }
-            .btn {
-                width: auto;
-            }
-            .summary-cards {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-            }
-            .flex-row {
-                flex-direction: row;
-                align-items: flex-end;
-            }
-            .billing-calculator {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .calendar-header {
-                flex-direction: row;
-                justify-content: space-between;
-            }
-            .calendar-header > div {
-                width: auto;
-            }
-            .calendar-header .btn-sm {
-                flex: none;
-            }
-            .print-preview-container {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-            .bill-card {
-                max-width: none;
-                margin: 0;
-            }
+            body { padding: 30px 20px; }
+            header { flex-direction: row; justify-content: space-between; align-items: center; }
+            .backup-btns { width: auto; }
+            .backup-btns button { flex: none; width: auto; }
+            .panel { padding: 25px; }
+            h2 { font-size: 18px; }
+            .btn { width: auto; }
+            .summary-cards { grid-template-columns: repeat(3, 1fr); gap: 15px; }
+            .flex-row { flex-direction: row; align-items: flex-end; }
+            .billing-calculator { grid-template-columns: repeat(3, 1fr); }
+            .calendar-header { flex-direction: row; justify-content: space-between; }
+            .calendar-header > div { width: auto; }
+            .calendar-header .btn-sm { flex: none; }
+            .print-preview-container { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .bill-card { max-width: none; margin: 0; }
         }
 
-        /* 絕對不要變動的原有列印樣式：確保 A4 輸出完全精準不跑版 */
+        /* 修正後的列印樣式：確保手機與電腦列印時第 11 位學生必定跳至第二頁頂端 */
         @media print {
             html, body {
                 background: #fff !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
             }
             body > *:not(.container), 
             header, .nav-tabs, .panel:not(#tab-print-view), .print-actions, h2 {
@@ -523,28 +487,44 @@
                 margin: 0 !important;
                 background: transparent !important;
             }
+            
+            /* 將外層 Grid 改為 Block 布局，防止手機瀏覽器忽略分頁指令 */
             .print-preview-container {
-                display: grid !important;
-                grid-template-columns: repeat(2, 96mm) !important;
-                gap: 0px !important;
+                display: block !important;
                 border: none !important;
                 padding: 0 !important;
-                width: 210mm !important;
-                justify-content: start !important;
-                align-content: start !important;
+                margin: 0 !important;
+                width: 198mm !important;
             }
+            
+            /* 單個繳費單採用 float 控制左右雙欄 */
             .bill-card {
+                display: block !important;
+                float: left !important;
                 border: 1px solid #000 !important;
                 width: 96mm !important;
-                height: 57mm !important; 
-                page-break-inside: avoid !important;
+                height: 56mm !important; 
                 box-sizing: border-box !important;
-                max-width: none !important;
-                margin: 0 !important;
+                margin-right: 3mm !important;
+                margin-bottom: 2mm !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
+
+            /* 右欄清除浮動 */
+            .bill-card:nth-child(2n) {
+                margin-right: 0 !important;
+            }
+
+            /* 每 10 個小卡片（即第 10、20... 位學生）後面，強制進行換頁 */
+            .bill-card:nth-child(10n) {
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+
             @page {
                 size: A4 portrait;
-                margin: 6mm 9mm;
+                margin: 6mm 6mm;
             }
         }
     </style>
@@ -803,7 +783,6 @@
             </div>
         </div>
 
-        <!-- 手機端預覽呈現單欄排版，而桌機或啟動列印時，將透過 CSS 強制切回精確的 210mm A4 規格雙欄排版 -->
         <div class="print-preview-container" id="bill-print-output-zone"></div>
     </div>
 
@@ -815,16 +794,14 @@
         orders: {},
         canceledPaid: {},
         dailyPrices: {},
-        // 新版帳務設計：以月為單位 db.monthlyBilling[monthStr][studentId] = { isPaid, amount, note, paidAt }
         monthlyBilling: {}, 
-        // 用於記錄已付款後的異動修改
         postPaymentChanges: {},
         config: { defaultPrice: 70 }
     };
 
     let batchSelectedDates = []; 
     let batchCurrentYear = 2026;
-    let batchCurrentMonth = 6; // 預設 7 月 (0-indexed)
+    let batchCurrentMonth = 6;
 
     function init() {
         const localData = localStorage.getItem('muji_dinner_db_v10');
@@ -836,10 +813,9 @@
                 if(!db.monthlyBilling) db.monthlyBilling = {};
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
                 if(!db.config) db.config = { defaultPrice: 70 };
-                else db.config.defaultPrice = 70; // 強制設定預設餐標為 70 元
+                else db.config.defaultPrice = 70;
             } catch(e) { console.error("資料讀取失敗"); }
         } else {
-            // 基礎演示資料
             db.students = {
                 "01": { id: "01", name: "林大林" },
                 "02": { id: "02", name: "陳小美" },
@@ -896,7 +872,6 @@
         return db.dailyPrices[dateStr] !== undefined ? db.dailyPrices[dateStr] : db.config.defaultPrice;
     }
 
-    // 計算特定學生在特定月份的「純訂餐費用小計」
     function calculateMonthCost(studentId, monthStr) {
         let total = 0;
         Object.keys(db.orders).forEach(dateStr => {
@@ -909,7 +884,6 @@
         return total;
     }
 
-    // 取得上一個月份字串 (YYYY-MM)
     function getLastMonthStr(currentMonthStr) {
         const parts = currentMonthStr.split('-');
         let y = parseInt(parts[0]);
@@ -918,7 +892,6 @@
         return `${y}-${String(m).padStart(2, '0')}`;
     }
 
-    // 【自動計算核心】取得上月留存異動差額 (已繳金額 - 訂餐費用)
     function getLastMonthBalance(studentId, currentMonthStr) {
         const lastMonthStr = getLastMonthStr(currentMonthStr);
         if (!db.monthlyBilling[lastMonthStr] || !db.monthlyBilling[lastMonthStr][studentId]) {
@@ -930,7 +903,6 @@
         return paidAmount - actualCost;
     }
 
-    // --- 1. 每日總覽 ---
     function renderDailyOverview() {
         const dateStr = document.getElementById('overview-date').value;
         if (!dateStr) return;
@@ -997,11 +969,9 @@
         const monthStr = dateStr.substring(0, 7);
         const isPaid = db.monthlyBilling[monthStr] && db.monthlyBilling[monthStr][studentId] && db.monthlyBilling[monthStr][studentId].isPaid;
 
-        // 記錄繳費後的異動紀錄
         if (isPaid) {
             if (!db.postPaymentChanges) db.postPaymentChanges = {};
             if (!db.postPaymentChanges[studentId]) db.postPaymentChanges[studentId] = [];
-            // 先過濾該日期的現存紀錄以防重複
             db.postPaymentChanges[studentId] = db.postPaymentChanges[studentId].filter(x => x.dateStr !== dateStr);
             db.postPaymentChanges[studentId].push({
                 dateStr: dateStr,
@@ -1022,7 +992,6 @@
         saveToLocalStorage(); refreshAllUI();
     }
 
-    // --- 2. 學生管理 ---
     function renderStudentList() {
         const tbody = document.querySelector('#student-table tbody');
         tbody.innerHTML = '';
@@ -1092,7 +1061,6 @@
         saveToLocalStorage(); refreshAllUI();
     }
 
-    // --- 3. 批次預訂 ---
     function renderBatchCalendar() {
         const grid = document.getElementById('batch-calendar-grid');
         const title = document.getElementById('calendar-month-title');
@@ -1184,7 +1152,6 @@
                 const monthStr = dateStr.substring(0, 7);
                 const isPaid = db.monthlyBilling[monthStr] && db.monthlyBilling[monthStr][id] && db.monthlyBilling[monthStr][id].isPaid;
 
-                // 批次異動時若已付款，亦寫入紀錄中
                 if (isPaid) {
                     if (!db.postPaymentChanges) db.postPaymentChanges = {};
                     if (!db.postPaymentChanges[id]) db.postPaymentChanges[id] = [];
@@ -1212,7 +1179,6 @@
         saveToLocalStorage(); refreshAllUI(); alert('批次操作完成'); clearBatchSelection();
     }
 
-    // --- 4. 繳費與核銷管理 ---
     function populateStudentDropdowns() {
         const billingSelect = document.getElementById('billing-student-select');
         const oldBillingVal = billingSelect.value;
@@ -1235,7 +1201,6 @@
         const student = db.students[id];
         document.getElementById('billing-student-title').innerText = `學生：${student.name} (${student.id}) ｜ ${targetMonth} 月份帳務結算`;
         
-        // A. 計算本月常規訂餐小計
         let normalDaysCount = 0; let normalCostSum = 0;
         Object.keys(db.orders).forEach(dateStr => {
             if (dateStr.startsWith(targetMonth)) {
@@ -1248,7 +1213,6 @@
         document.getElementById('calc-current-month-cost').innerText = `$${normalCostSum}`;
         document.getElementById('calc-current-days').innerText = normalDaysCount;
 
-        // B. 【自動計算核心】自動由系統向上月追溯結轉差額
         currentCalculatedBalance = getLastMonthBalance(id, targetMonth);
         document.getElementById('billing-balance-adjustment').innerText = (currentCalculatedBalance > 0 ? `+${currentCalculatedBalance}` : currentCalculatedBalance);
         
@@ -1257,11 +1221,9 @@
         const lastCost = calculateMonthCost(id, lastMonthStr);
         document.getElementById('calc-last-month-detail').innerText = `(上月已繳$${lastBilling.isPaid ? lastBilling.amount : 0} - 上月費用$${lastCost})`;
 
-        // C. 計算最終建議應繳金額
         const finalTotal = currentCalculatedNormalCost - currentCalculatedBalance;
         document.getElementById('calc-final-total').innerText = finalTotal;
 
-        // 載入當月已儲存的狀態
         if (!db.monthlyBilling[targetMonth]) db.monthlyBilling[targetMonth] = {};
         const currentBilling = db.monthlyBilling[targetMonth][id] || { isPaid: false, amount: 0, note: "" };
 
@@ -1269,7 +1231,6 @@
         document.getElementById('billing-amount-input').value = currentBilling.isPaid ? currentBilling.amount : (finalTotal > 0 ? finalTotal : 0);
         document.getElementById('billing-note-input').value = currentBilling.note || "";
 
-        // 渲染付款後取消明細
         const tbody = document.querySelector('#canceled-paid-table tbody');
         tbody.innerHTML = '';
         const canceledDates = db.canceledPaid[id] || [];
@@ -1377,7 +1338,6 @@
         }
     }
 
-    // --- 5. 列印繳費單功能 ---
     function renderPrintStudentCheckboxes() {
         const container = document.getElementById('print-student-checkboxes');
         const checkedIds = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
@@ -1394,7 +1354,6 @@
         generatePrintBills();
     }
 
-    // 【重構功能】產生收據，預設餐標為 70，去除備註日期與重複，並可自動引流上月繳費後異動到下月備註
     function generatePrintBills() {
         const targetMonth = document.getElementById('print-month-filter').value;
         const outputZone = document.getElementById('bill-print-output-zone');
@@ -1417,7 +1376,7 @@
 
             let count70 = 0; let count75 = 0;
             let orderedDatesThisMonth = [];
-            let orderNotesSet = new Set(); // 改用 Set 來過濾重複的訂餐備註文字
+            let orderNotesSet = new Set();
 
             Object.keys(db.orders).sort().forEach(dateStr => {
                 if (dateStr.startsWith(targetMonth)) {
@@ -1425,7 +1384,6 @@
                         orderedDatesThisMonth.push(dateStr);
                         if(getPriceForDate(dateStr) === 75) count75++; else count70++;
                         
-                        // 收集訂餐備註 (排除空值、批次與手動等非自訂輸入內容)
                         if(db.orders[dateStr][id].note) {
                             let noteText = db.orders[dateStr][id].note.trim();
                             if (noteText && noteText !== "批次預訂" && noteText !== "個別手動調整") {
@@ -1437,7 +1395,6 @@
             });
 
             const normalCost = (count70 * 70) + (count75 * 75);
-            // 自動引入上月結轉餘額
             const balance = getLastMonthBalance(id, targetMonth); 
             const finalTotal = normalCost - balance;
             const showMonth = parts[1].replace(/^0/, '');
@@ -1448,12 +1405,10 @@
             const leftDiv = document.createElement('div');
             leftDiv.className = 'bill-left';
             
-            // 處理顯示文字
             let balanceText = "0 元";
             if (balance > 0) balanceText = `退 ${balance} 元 (溢繳)`;
             else if (balance < 0) balanceText = `補 ${Math.abs(balance)} 元 (欠款)`;
 
-            // 在此處特別對 bill-total-row 內嵌 Flex 樣式，將「萊諾 曹老師」與「應繳金額」並排分布於左下與右下
             leftDiv.innerHTML = `
                 <div>
                     <div class="bill-student-name">${student.name}</div>
@@ -1495,21 +1450,18 @@
             }
             calGridHTML += '</div>';
 
-            // 處理「繳費後修改（加訂或取消）」寫入下個月的備註邏輯
             let lastMonthStr = getLastMonthStr(targetMonth);
             let postPaymentNotes = [];
             if (db.postPaymentChanges && db.postPaymentChanges[id]) {
                 db.postPaymentChanges[id].forEach(change => {
-                    // 若這筆變更的日期屬於「上一個月份」，則應加入本月備註
                     if (change.dateStr.startsWith(lastMonthStr)) {
-                        let dayPart = change.dateStr.substring(5).replace('-', '/'); // "06/15"
+                        let dayPart = change.dateStr.substring(5).replace('-', '/');
                         let label = change.type === 'cancel' ? '取消' : '加訂';
                         postPaymentNotes.push(`${dayPart}${label}`);
                     }
                 });
             }
 
-            // 合併所有的備註區塊
             let finalNoteParts = [];
             if (orderNotesSet.size > 0) {
                 finalNoteParts.push(Array.from(orderNotesSet).join('；'));
