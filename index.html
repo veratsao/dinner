@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統</title>
+    <title>晚餐預訂系統 ｜ MUJI Style v10 </title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -696,12 +696,7 @@
             </div>
             <div>
                 <label><strong>2. 結算月份篩選</strong></label>
-                <select id="billing-month-filter" onchange="renderStudentBilling()">
-                    <option value="2026-05">2026 年 05 月</option>
-                    <option value="2026-06">2026 年 06 月</option>
-                    <option value="2026-07">2026 年 07 月</option>
-                    <option value="2026-08">2026 年 08 月</option>
-                </select>
+                <select id="billing-month-filter" onchange="renderStudentBilling()"></select>
             </div>
         </div>
 
@@ -777,12 +772,7 @@
             <div class="flex-row" style="margin-bottom: 15px;">
                 <div style="flex: 1;">
                     <label><strong>選擇列印月份</strong></label>
-                    <select id="print-month-filter" onchange="generatePrintBills()">
-                        <option value="2026-05">2026 年 05 月</option>
-                        <option value="2026-06">2026 年 06 月</option>
-                        <option value="2026-07">2026 年 07 月</option>
-                        <option value="2026-08">2026 年 08 月</option>
-                    </select>
+                    <select id="print-month-filter" onchange="generatePrintBills()"></select>
                 </div>
                 <div style="text-align: left; width: 100%;">
                     <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height: 1.4;">※ 提示：系統已建立精確分頁機制，每 10 人精準填滿一張 A4，第 11 人起自動跳至第二頁。</p>
@@ -821,7 +811,31 @@
     let batchCurrentYear = 2026;
     let batchCurrentMonth = 6;
 
+    // 自動動態生成月份選單選項 (涵蓋 2026 ~ 2027 年全月份)
+    function initMonthDropdowns() {
+        const billingSelect = document.getElementById('billing-month-filter');
+        const printSelect = document.getElementById('print-month-filter');
+        
+        billingSelect.innerHTML = '';
+        printSelect.innerHTML = '';
+
+        const startYear = 2026;
+        const endYear = 2027;
+
+        for (let y = startYear; y <= endYear; y++) {
+            for (let m = 1; m <= 12; m++) {
+                const monthVal = `${y}-${String(m).padStart(2, '0')}`;
+                const monthText = `${y} 年 ${String(m).padStart(2, '0')} 月`;
+                
+                billingSelect.innerHTML += `<option value="${monthVal}">${monthText}</option>`;
+                printSelect.innerHTML += `<option value="${monthVal}">${monthText}</option>`;
+            }
+        }
+    }
+
     function init() {
+        initMonthDropdowns();
+
         const localData = localStorage.getItem('muji_dinner_db_v10');
         if (localData) {
             try {
@@ -1372,7 +1386,6 @@
         generatePrintBills();
     }
 
-    /* 關鍵優化：將卡片按 10 人一組包裹至 .bill-page 實體頁面容器中 */
     function generatePrintBills() {
         const targetMonth = document.getElementById('print-month-filter').value;
         const outputZone = document.getElementById('bill-print-output-zone');
@@ -1380,7 +1393,7 @@
         const checkboxes = document.querySelectorAll('input[name="print-student-cb"]:checked');
         const selectedIds = Array.from(checkboxes).map(cb => cb.value);
 
-        if(selectedIds.length === 0) {
+        if(!targetMonth || selectedIds.length === 0) {
             outputZone.innerHTML = '<div style="text-align:center; padding: 40px; color:var(--text-muted);">請勾選學生</div>';
             return;
         }
@@ -1392,7 +1405,6 @@
         let currentPageDiv = null;
 
         selectedIds.forEach((id, index) => {
-            // 每 10 個卡片自動新建一個 .bill-page 實體實體頁面容器
             if (index % 10 === 0) {
                 currentPageDiv = document.createElement('div');
                 currentPageDiv.className = 'bill-page';
