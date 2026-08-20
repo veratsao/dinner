@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ MUJI Style v10 </title>
+    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -556,7 +556,10 @@
             <button onclick="exportData()">匯出備份 (JSON)</button>
             <button onclick="document.getElementById('importFile').click()">匯入備份</button>
             <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+            <button onclick="doSyncToCloud()">立即同步雲端</button>
+            <button onclick="clearAllData()" style="border-color:var(--muji-red); color:var(--muji-red);">清空所有資料（新學期）</button>
         </div>
+        <div id="sync-status" style="font-size:12px; color:var(--text-muted);"></div>
     </header>
 
     <div class="nav-tabs">
@@ -811,6 +814,89 @@
     let batchCurrentYear = 2026;
     let batchCurrentMonth = 6;
 
+    // ==== 雲端同步設定（Google Apps Script）====
+    // 把部署好的 Apps Script 網頁應用程式網址貼在下面的引號中
+    const CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbzyzj0IALsUulWPalwNsFl5JfTP9jPlBfboYd8DvafD8Xv0NPYsNkau0qWq9fjc6qA6jg/exec";
+
+    let syncTimer = null;
+    let isSyncing = false;
+
+    function isCloudConfigured() {
+        return CLOUD_SYNC_URL && !CLOUD_SYNC_URL.includes("請貼上");
+    }
+
+    function updateSyncStatus(text, isError) {
+        const el = document.getElementById('sync-status');
+        if (!el) return;
+        el.textContent = text;
+        el.style.color = isError ? 'var(--muji-red)' : 'var(--text-muted)';
+    }
+
+    // 開啟頁面時嘗試從雲端讀取最新資料
+    async function loadFromCloud() {
+        if (!isCloudConfigured()) {
+            updateSyncStatus('尚未設定雲端同步網址，目前僅使用本機資料');
+            return false;
+        }
+        try {
+            updateSyncStatus('雲端資料讀取中...');
+            const res = await fetch(CLOUD_SYNC_URL + '?action=load');
+            const result = await res.json();
+            if (result.status === 'ok' && result.data) {
+                db = result.data;
+                if(!db.canceledPaid) db.canceledPaid = {};
+                if(!db.dailyPrices) db.dailyPrices = {};
+                if(!db.monthlyBilling) db.monthlyBilling = {};
+                if(!db.postPaymentChanges) db.postPaymentChanges = {};
+                if(!db.config) db.config = { defaultPrice: 70 };
+                localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
+                updateSyncStatus('雲端資料已載入 ✓');
+                return true;
+            }
+            updateSyncStatus('雲端目前無資料，將以本機資料為主');
+            return false;
+        } catch (e) {
+            console.error(e);
+            updateSyncStatus('雲端讀取失敗，改用本機資料', true);
+            return false;
+        }
+    }
+
+    // 資料異動後排入雲端同步（1.2 秒內的連續操作只會送出最後一次，避免頻繁寫入）
+    function syncToCloud() {
+        if (!isCloudConfigured()) return;
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(doSyncToCloud, 1200);
+    }
+
+    async function doSyncToCloud() {
+        if (!isCloudConfigured()) {
+            updateSyncStatus('尚未設定雲端同步網址', true);
+            return;
+        }
+        if (isSyncing) { syncTimer = setTimeout(doSyncToCloud, 1200); return; }
+        isSyncing = true;
+        updateSyncStatus('同步中...');
+        try {
+            const res = await fetch(CLOUD_SYNC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'save', data: db })
+            });
+            const result = await res.json();
+            if (result.status === 'ok') {
+                updateSyncStatus('已同步至雲端 ✓ (' + new Date().toLocaleTimeString('zh-TW') + ')');
+            } else {
+                updateSyncStatus('同步失敗：' + (result.message || '未知錯誤'), true);
+            }
+        } catch (e) {
+            console.error(e);
+            updateSyncStatus('同步失敗，請檢查網路連線', true);
+        } finally {
+            isSyncing = false;
+        }
+    }
+
     // 自動動態生成月份選單選項 (涵蓋 2026 ~ 2027 年全月份)
     function initMonthDropdowns() {
         const billingSelect = document.getElementById('billing-month-filter');
@@ -833,50 +919,55 @@
         }
     }
 
-    function init() {
+    async function init() {
         initMonthDropdowns();
 
-        const localData = localStorage.getItem('muji_dinner_db_v10');
-        if (localData) {
-            try {
-                db = JSON.parse(localData);
-                if(!db.canceledPaid) db.canceledPaid = {};
-                if(!db.dailyPrices) db.dailyPrices = {};
-                if(!db.monthlyBilling) db.monthlyBilling = {};
-                if(!db.postPaymentChanges) db.postPaymentChanges = {};
-                if(!db.config) db.config = { defaultPrice: 70 };
-                else db.config.defaultPrice = 70;
-            } catch(e) { console.error("資料讀取失敗"); }
-        } else {
-            db.students = {
-                "01": { id: "01", name: "林大林" },
-                "02": { id: "02", name: "陳小美" },
-                "03": { id: "03", name: "王阿明" }
-            };
-            db.orders = {
-                "2026-06-01": { "01": { ordered: true, note: "不要辣" }, "02": { ordered: true, note: "" } },
-                "2026-06-02": { "01": { ordered: true, note: "不要辣" }, "03": { ordered: true, note: "" } },
-                "2026-07-01": { "01": { ordered: true, note: "雞腿飯" }, "02": { ordered: true, note: "" } }
-            };
-            db.monthlyBilling = {
-                "2026-06": {
-                    "01": { isPaid: true, amount: 200, note: "上月溢繳示範", paidAt: "2026/06/30 17:00" },
-                    "02": { isPaid: true, amount: 50, note: "上月少繳示範", paidAt: "2026/06/30 18:00" }
-                }
-            };
-            db.postPaymentChanges = {};
+        const cloudLoaded = await loadFromCloud();
+
+        if (!cloudLoaded) {
+            const localData = localStorage.getItem('muji_dinner_db_v10');
+            if (localData) {
+                try {
+                    db = JSON.parse(localData);
+                    if(!db.canceledPaid) db.canceledPaid = {};
+                    if(!db.dailyPrices) db.dailyPrices = {};
+                    if(!db.monthlyBilling) db.monthlyBilling = {};
+                    if(!db.postPaymentChanges) db.postPaymentChanges = {};
+                    if(!db.config) db.config = { defaultPrice: 70 };
+                    else db.config.defaultPrice = 70;
+                } catch(e) { console.error("資料讀取失敗"); }
+            } else {
+                db.students = {
+                    "01": { id: "01", name: "林大林" },
+                    "02": { id: "02", name: "陳小美" },
+                    "03": { id: "03", name: "王阿明" }
+                };
+                db.orders = {
+                    "2026-06-01": { "01": { ordered: true, note: "不要辣" }, "02": { ordered: true, note: "" } },
+                    "2026-06-02": { "01": { ordered: true, note: "不要辣" }, "03": { ordered: true, note: "" } },
+                    "2026-07-01": { "01": { ordered: true, note: "雞腿飯" }, "02": { ordered: true, note: "" } }
+                };
+                db.monthlyBilling = {
+                    "2026-06": {
+                        "01": { isPaid: true, amount: 200, note: "上月溢繳示範", paidAt: "2026/06/30 17:00" },
+                        "02": { isPaid: true, amount: 50, note: "上月少繳示範", paidAt: "2026/06/30 18:00" }
+                    }
+                };
+                db.postPaymentChanges = {};
+            }
         }
 
         document.getElementById('overview-date').value = "2026-07-01";
         document.getElementById('billing-month-filter').value = "2026-07";
         document.getElementById('print-month-filter').value = "2026-07";
-        saveToLocalStorage();
+        if (!cloudLoaded) saveToLocalStorage();
         refreshAllUI();
         togglePrintAllStudents(true);
     }
 
     function saveToLocalStorage() {
         localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
+        syncToCloud();
     }
 
     function refreshAllUI() {
@@ -1523,6 +1614,26 @@
             billCard.appendChild(leftDiv); billCard.appendChild(rightDiv);
             currentPageDiv.appendChild(billCard);
         });
+    }
+
+    function clearAllData() {
+        if (!confirm('確定要清空所有資料嗎？\n\n這會刪除所有學生名單、訂餐紀錄與帳務資料，且無法復原！\n\n建議先按「匯出備份 (JSON)」保留一份存檔。')) return;
+        if (!confirm('請再次確認：真的要清空全部資料，開始新學期嗎？')) return;
+
+        db = {
+            students: {},
+            orders: {},
+            canceledPaid: {},
+            dailyPrices: {},
+            monthlyBilling: {},
+            postPaymentChanges: {},
+            config: { defaultPrice: 70 }
+        };
+
+        saveToLocalStorage();
+        refreshAllUI();
+        togglePrintAllStudents(true);
+        alert('資料已清空，可以開始新學期囉！');
     }
 
     function exportData() {
