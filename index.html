@@ -919,6 +919,14 @@
         }
     }
 
+    function getTodayStr() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
     async function init() {
         initMonthDropdowns();
 
@@ -957,7 +965,7 @@
             }
         }
 
-        document.getElementById('overview-date').value = "2026-07-01";
+        document.getElementById('overview-date').value = getTodayStr();
         document.getElementById('billing-month-filter').value = "2026-07";
         document.getElementById('print-month-filter').value = "2026-07";
         if (!cloudLoaded) saveToLocalStorage();
