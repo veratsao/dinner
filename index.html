@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
+    <title>晚餐預訂系統 </title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -927,6 +927,13 @@
         return `${y}-${m}-${day}`;
     }
 
+    // 依學生號碼排序（數字號碼會照數值大小排，例如 2 會排在 10 前面）
+    function getSortedStudents() {
+        return Object.values(db.students).sort((a, b) =>
+            a.id.localeCompare(b.id, 'zh-Hant', { numeric: true })
+        );
+    }
+
     async function init() {
         initMonthDropdowns();
 
@@ -1047,7 +1054,7 @@
         let orderCount = 0;
         let visibleCount = 0;
 
-        Object.values(db.students).forEach(student => {
+        getSortedStudents().forEach(student => {
             const orderInfo = dayOrders[student.id];
             const isOrdered = orderInfo && orderInfo.ordered === true;
             const isCanceledPaid = db.canceledPaid[student.id] && db.canceledPaid[student.id].includes(dateStr);
@@ -1127,7 +1134,7 @@
         const tbody = document.querySelector('#student-table tbody');
         tbody.innerHTML = '';
         const keyword = document.getElementById('search-student-input').value.trim().toLowerCase();
-        Object.values(db.students).forEach(student => {
+        getSortedStudents().forEach(student => {
             if (keyword && !student.id.toLowerCase().includes(keyword) && !student.name.toLowerCase().includes(keyword)) return;
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${student.id}</td><td>${student.name}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${student.id}')">刪除</button></td>`;
@@ -1255,7 +1262,7 @@
     function renderBatchStudentCheckboxes() {
         const container = document.getElementById('batch-student-checkboxes');
         container.innerHTML = '';
-        Object.values(db.students).forEach(s => {
+        getSortedStudents().forEach(s => {
             container.innerHTML += `<label class="student-item"><input type="checkbox" name="batch-student-cb" value="${s.id}"><span>${s.name} (${s.id})</span></label>`;
         });
     }
@@ -1314,7 +1321,7 @@
         const billingSelect = document.getElementById('billing-student-select');
         const oldBillingVal = billingSelect.value;
         billingSelect.innerHTML = '<option value="">-- 請選擇學生 --</option>';
-        Object.values(db.students).forEach(s => {
+        getSortedStudents().forEach(s => {
             billingSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.id})</option>`;
         });
         if (oldBillingVal && db.students[oldBillingVal]) billingSelect.value = oldBillingVal;
@@ -1474,7 +1481,7 @@
         const checkedIds = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
         const hasExistingCbs = container.querySelectorAll('input').length > 0;
         container.innerHTML = '';
-        Object.values(db.students).forEach(s => {
+        getSortedStudents().forEach(s => {
             const isChecked = hasExistingCbs ? checkedIds.includes(s.id) : true;
             container.innerHTML += `<label class="student-item"><input type="checkbox" name="print-student-cb" value="${s.id}" ${isChecked ? 'checked' : ''}><span>${s.name}</span></label>`;
         });
