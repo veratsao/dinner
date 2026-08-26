@@ -458,6 +458,39 @@
             .bill-card { max-width: none; margin: 0; }
         }
 
+        /* ==== 手機版／電腦版手動切換（不論實際視窗寬度，強制套用其中一種版面）==== */
+        body.force-desktop { padding: 30px 20px; }
+        body.force-desktop header { flex-direction: row; justify-content: space-between; align-items: center; }
+        body.force-desktop .backup-btns { width: auto; }
+        body.force-desktop .backup-btns button { flex: none; width: auto; }
+        body.force-desktop .panel { padding: 25px; }
+        body.force-desktop h2 { font-size: 18px; }
+        body.force-desktop .btn { width: auto; }
+        body.force-desktop .summary-cards { grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        body.force-desktop .flex-row { flex-direction: row; align-items: flex-end; }
+        body.force-desktop .billing-calculator { grid-template-columns: repeat(3, 1fr); }
+        body.force-desktop .calendar-header { flex-direction: row; justify-content: space-between; }
+        body.force-desktop .calendar-header > div { width: auto; }
+        body.force-desktop .calendar-header .btn-sm { flex: none; }
+        body.force-desktop .bill-page { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        body.force-desktop .bill-card { max-width: none; margin: 0; }
+
+        body.force-mobile { padding: 15px 10px; }
+        body.force-mobile header { flex-direction: column; justify-content: flex-start; align-items: stretch; }
+        body.force-mobile .backup-btns { width: 100%; }
+        body.force-mobile .backup-btns button { flex: 1; width: auto; }
+        body.force-mobile .panel { padding: 15px; }
+        body.force-mobile h2 { font-size: 16px; }
+        body.force-mobile .btn { width: 100%; }
+        body.force-mobile .summary-cards { grid-template-columns: 1fr; gap: 10px; }
+        body.force-mobile .flex-row { flex-direction: column; align-items: stretch; }
+        body.force-mobile .billing-calculator { grid-template-columns: 1fr; }
+        body.force-mobile .calendar-header { flex-direction: column; justify-content: center; }
+        body.force-mobile .calendar-header > div { width: 100%; }
+        body.force-mobile .calendar-header .btn-sm { flex: 1; }
+        body.force-mobile .bill-page { grid-template-columns: 1fr; gap: 12px; }
+        body.force-mobile .bill-card { max-width: 380px; margin: 0 auto; }
+
         /* 完美修正手機/電腦瀏覽器列印：一頁絕對 10 張卡片 */
         @media print {
             html, body {
@@ -558,6 +591,7 @@
             <input type="file" id="importFile" style="display:none" onchange="importData(event)">
             <button onclick="doSyncToCloud()">立即同步雲端</button>
             <button onclick="clearAllData()" style="border-color:var(--muji-red); color:var(--muji-red);">清空所有資料（新學期）</button>
+            <button id="view-mode-btn" onclick="toggleViewMode()">切換手機/電腦版</button>
         </div>
         <div id="sync-status" style="font-size:12px; color:var(--text-muted);"></div>
     </header>
@@ -934,8 +968,34 @@
         );
     }
 
+    // ==== 手機版／電腦版切換 ====
+    // 三段循環：自動（依實際螢幕寬度）→ 手機版 → 電腦版 → 自動...
+    const VIEW_MODE_KEY = 'muji_dinner_view_mode';
+
+    function applyViewMode(mode) {
+        document.body.classList.remove('force-mobile', 'force-desktop');
+        const btn = document.getElementById('view-mode-btn');
+        if (mode === 'mobile') {
+            document.body.classList.add('force-mobile');
+            if (btn) btn.textContent = '版面：手機版（點擊切換）';
+        } else if (mode === 'desktop') {
+            document.body.classList.add('force-desktop');
+            if (btn) btn.textContent = '版面：電腦版（點擊切換）';
+        } else {
+            if (btn) btn.textContent = '版面：自動（點擊切換）';
+        }
+    }
+
+    function toggleViewMode() {
+        const current = localStorage.getItem(VIEW_MODE_KEY) || 'auto';
+        const next = current === 'auto' ? 'mobile' : (current === 'mobile' ? 'desktop' : 'auto');
+        localStorage.setItem(VIEW_MODE_KEY, next);
+        applyViewMode(next);
+    }
+
     async function init() {
         initMonthDropdowns();
+        applyViewMode(localStorage.getItem(VIEW_MODE_KEY) || 'auto');
 
         const cloudLoaded = await loadFromCloud();
 
