@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
+    <title>晚餐預訂系統 ｜ MUJI Style v10 </title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -500,6 +500,15 @@
                 width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
+                /* 強制列印背景色（否則瀏覽器預設會把底色印成白色，75元的灰底會不見） */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
             body > *:not(.container), 
             header, .nav-tabs, .panel:not(#tab-print-view), .print-actions, h2 {
@@ -845,12 +854,12 @@
     };
 
     let batchSelectedDates = []; 
-    let batchCurrentYear = 2026;
-    let batchCurrentMonth = 6;
+    let batchCurrentYear = new Date().getFullYear();
+    let batchCurrentMonth = new Date().getMonth(); // 0-indexed（與下方月曆邏輯相符）
 
     // ==== 雲端同步設定（Google Apps Script）====
     // 把部署好的 Apps Script 網頁應用程式網址貼在下面的引號中
-    const CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbzyzj0IALsUulWPalwNsFl5JfTP9jPlBfboYd8DvafD8Xv0NPYsNkau0qWq9fjc6qA6jg/exec";
+    const CLOUD_SYNC_URL = "請貼上您的 Google Apps Script 網頁應用程式網址";
 
     let syncTimer = null;
     let isSyncing = false;
@@ -939,8 +948,8 @@
         billingSelect.innerHTML = '';
         printSelect.innerHTML = '';
 
-        const startYear = 2026;
-        const endYear = 2027;
+        const startYear = new Date().getFullYear() - 1;
+        const endYear = new Date().getFullYear() + 1;
 
         for (let y = startYear; y <= endYear; y++) {
             for (let m = 1; m <= 12; m++) {
@@ -959,6 +968,11 @@
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
+    }
+
+    function getCurrentYearMonthStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
     // 依學生號碼排序（數字號碼會照數值大小排，例如 2 會排在 10 前面）
@@ -1033,8 +1047,8 @@
         }
 
         document.getElementById('overview-date').value = getTodayStr();
-        document.getElementById('billing-month-filter').value = "2026-07";
-        document.getElementById('print-month-filter').value = "2026-07";
+        document.getElementById('billing-month-filter').value = getCurrentYearMonthStr();
+        document.getElementById('print-month-filter').value = getCurrentYearMonthStr();
         if (!cloudLoaded) saveToLocalStorage();
         refreshAllUI();
         togglePrintAllStudents(true);
