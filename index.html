@@ -193,6 +193,34 @@
             border: 1px solid var(--border-color);
         }
 
+        /* 按鈕式選擇：學生名單 / 繳費狀態 */
+        .choice-btn-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .choice-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+            color: var(--text-main);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+        .choice-btn:hover { border-color: var(--text-main); }
+        .choice-btn.active {
+            background-color: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+        }
+        .choice-btn.paid-btn.active { background-color: var(--success); border-color: var(--success); }
+        .choice-btn.unpaid-btn.active { background-color: var(--muji-red); border-color: var(--muji-red); }
+        .status-btn-group { display: flex; gap: 10px; margin-top: 8px; }
+        .status-btn-group .choice-btn { flex: 1; text-align: center; padding: 12px; font-size: 14px; border-radius: 4px; }
+
         .summary-cards {
             display: grid;
             grid-template-columns: 1fr;
@@ -738,7 +766,8 @@
         <div class="search-box" style="background: var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius: 4px; display: flex; flex-direction: column; gap: 12px;">
             <div>
                 <label><strong>1. 選擇查核學生</strong></label>
-                <select id="billing-student-select" onchange="renderStudentBilling()"></select>
+                <div id="billing-student-buttons" class="choice-btn-grid"></div>
+                <select id="billing-student-select" onchange="renderStudentBilling()" style="display:none;"></select>
             </div>
             <div>
                 <label><strong>2. 結算月份篩選</strong></label>
@@ -767,7 +796,11 @@
             <div class="flex-row" style="margin-top:15px;">
                 <div>
                     <label>繳費狀態</label>
-                    <select id="billing-status-select">
+                    <div class="status-btn-group">
+                        <button type="button" class="choice-btn unpaid-btn" id="billing-status-btn-false" onclick="setBillingStatus(false)">未繳費</button>
+                        <button type="button" class="choice-btn paid-btn" id="billing-status-btn-true" onclick="setBillingStatus(true)">已繳費</button>
+                    </div>
+                    <select id="billing-status-select" style="display:none;">
                         <option value="false">未繳費</option>
                         <option value="true">已繳費</option>
                     </select>
@@ -1399,6 +1432,41 @@
             billingSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.id})</option>`;
         });
         if (oldBillingVal && db.students[oldBillingVal]) billingSelect.value = oldBillingVal;
+        renderBillingStudentButtons();
+    }
+
+    // 按鈕式學生選擇（繳費與跨月核銷頁面）
+    function renderBillingStudentButtons() {
+        const container = document.getElementById('billing-student-buttons');
+        if (!container) return;
+        const selectedId = document.getElementById('billing-student-select').value;
+        container.innerHTML = '';
+        getSortedStudents().forEach(s => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'choice-btn' + (s.id === selectedId ? ' active' : '');
+            btn.textContent = `${s.name} (${s.id})`;
+            btn.onclick = () => selectBillingStudent(s.id);
+            container.appendChild(btn);
+        });
+    }
+
+    function selectBillingStudent(id) {
+        document.getElementById('billing-student-select').value = id;
+        renderStudentBilling();
+    }
+
+    // 按鈕式繳費狀態切換
+    function setBillingStatus(isPaid) {
+        document.getElementById('billing-status-select').value = isPaid ? "true" : "false";
+        updateBillingStatusButtons(isPaid);
+    }
+
+    function updateBillingStatusButtons(isPaid) {
+        const paidBtn = document.getElementById('billing-status-btn-true');
+        const unpaidBtn = document.getElementById('billing-status-btn-false');
+        if (paidBtn) paidBtn.classList.toggle('active', !!isPaid);
+        if (unpaidBtn) unpaidBtn.classList.toggle('active', !isPaid);
     }
 
     let currentCalculatedNormalCost = 0;
@@ -1408,6 +1476,7 @@
         const id = document.getElementById('billing-student-select').value;
         const targetMonth = document.getElementById('billing-month-filter').value;
         const area = document.getElementById('billing-detail-area');
+        renderBillingStudentButtons();
         if (!id || !db.students[id]) { area.style.display = 'none'; return; }
         area.style.display = 'block';
         const student = db.students[id];
@@ -1440,6 +1509,7 @@
         const currentBilling = db.monthlyBilling[targetMonth][id] || { isPaid: false, amount: 0, note: "" };
 
         document.getElementById('billing-status-select').value = currentBilling.isPaid ? "true" : "false";
+        updateBillingStatusButtons(currentBilling.isPaid);
         document.getElementById('billing-amount-input').value = currentBilling.isPaid ? currentBilling.amount : (finalTotal > 0 ? finalTotal : 0);
         document.getElementById('billing-note-input').value = currentBilling.note || "";
 
