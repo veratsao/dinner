@@ -1139,10 +1139,11 @@
 
     function getLastMonthBalance(studentId, currentMonthStr) {
         const lastMonthStr = getLastMonthStr(currentMonthStr);
-        if (!db.monthlyBilling[lastMonthStr] || !db.monthlyBilling[lastMonthStr][studentId]) {
-            return 0; 
-        }
-        const lastBilling = db.monthlyBilling[lastMonthStr][studentId];
+        // 若上個月完全沒有這位學生的繳費紀錄，視同「未繳費」，而不是視為沒有欠款。
+        // 這樣即使老師沒有特地去該生的帳務頁存檔，上月未繳的餐費金額還是會自動被列入這個月的上月結餘（欠款）。
+        const lastBilling = (db.monthlyBilling[lastMonthStr] && db.monthlyBilling[lastMonthStr][studentId])
+            ? db.monthlyBilling[lastMonthStr][studentId]
+            : { isPaid: false, amount: 0 };
         const paidAmount = lastBilling.isPaid ? (lastBilling.amount || 0) : 0;
         const actualCost = calculateMonthCost(studentId, lastMonthStr);
         return paidAmount - actualCost;
