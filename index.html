@@ -476,7 +476,7 @@
             .panel { padding: 25px; }
             h2 { font-size: 18px; }
             .btn { width: auto; }
-            .summary-cards { grid-template-columns: repeat(3, 1fr); gap: 15px; }
+            .summary-cards { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
             .flex-row { flex-direction: row; align-items: flex-end; }
             .billing-calculator { grid-template-columns: repeat(3, 1fr); }
             .calendar-header { flex-direction: row; justify-content: space-between; }
@@ -494,7 +494,7 @@
         body.force-desktop .panel { padding: 25px; }
         body.force-desktop h2 { font-size: 18px; }
         body.force-desktop .btn { width: auto; }
-        body.force-desktop .summary-cards { grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        body.force-desktop .summary-cards { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
         body.force-desktop .flex-row { flex-direction: row; align-items: flex-end; }
         body.force-desktop .billing-calculator { grid-template-columns: repeat(3, 1fr); }
         body.force-desktop .calendar-header { flex-direction: row; justify-content: space-between; }
@@ -662,6 +662,7 @@
             <div class="card"><div class="title">今日訂餐人數</div><div class="value" id="sum-count">0 人</div></div>
             <div class="card"><div class="title">當日設定單價</div><div class="value" id="sum-price">$70</div></div>
             <div class="card"><div class="title">今日總金額</div><div class="value" style="color:var(--muji-red)" id="sum-total">$0</div></div>
+            <div class="card"><div class="title">目前收支（已收−已訂餐）</div><div class="value" id="sum-cashflow">$0</div></div>
         </div>
 
         <h3 style="color:var(--success)">當日訂餐名單 (僅顯示有訂餐/已付款取消學生)</h3>
@@ -1200,6 +1201,40 @@
 
         document.getElementById('sum-count').innerText = `${orderCount} 人`;
         document.getElementById('sum-total').innerText = `$${orderCount * price}`;
+        renderCurrentCashFlow();
+    }
+
+    // 目前收支 = 全部已收金額（所有月份已標記「已繳費」的金額加總）
+    //          - 結至今日已訂餐金額（所有歷史訂餐紀錄中，日期 <= 今天的餐費總和）
+    function computeCurrentCashFlow() {
+        const todayStr = getTodayStr();
+
+        let totalReceived = 0;
+        Object.values(db.monthlyBilling).forEach(monthRecords => {
+            Object.values(monthRecords).forEach(rec => {
+                if (rec.isPaid) totalReceived += (rec.amount || 0);
+            });
+        });
+
+        let totalOrderedCostToDate = 0;
+        Object.keys(db.orders).forEach(dateStr => {
+            if (dateStr <= todayStr) {
+                const price = getPriceForDate(dateStr);
+                Object.values(db.orders[dateStr]).forEach(o => {
+                    if (o.ordered) totalOrderedCostToDate += price;
+                });
+            }
+        });
+
+        return totalReceived - totalOrderedCostToDate;
+    }
+
+    function renderCurrentCashFlow() {
+        const el = document.getElementById('sum-cashflow');
+        if (!el) return;
+        const cashFlow = computeCurrentCashFlow();
+        el.innerText = `$${cashFlow}`;
+        el.style.color = cashFlow < 0 ? 'var(--muji-red)' : 'var(--success)';
     }
 
     function saveDailyPrice() {
