@@ -57,16 +57,17 @@
 
         .backup-btns {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
             width: 100%;
         }
 
         .backup-btns button {
-            flex: 1;
+            flex: 1 1 auto;
             background: none;
             border: 1px solid var(--text-main);
             color: var(--text-main);
-            padding: 10px 12px;
+            padding: 8px 12px;
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
@@ -193,7 +194,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 按鈕式選擇：學生名單 / 繳費狀態 */
         .choice-btn-grid {
             display: flex;
             flex-wrap: wrap;
@@ -388,7 +388,6 @@
 
         .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
 
-        /* 列印頁面預覽容器 */
         .print-preview-container {
             display: flex;
             flex-direction: column;
@@ -467,7 +466,6 @@
             line-height: 1.25;
         }
 
-        /* 桌上型電腦/平板等大螢幕優化 */
         @media (min-width: 768px) {
             body { padding: 30px 20px; }
             header { flex-direction: row; justify-content: space-between; align-items: center; }
@@ -486,7 +484,6 @@
             .bill-card { max-width: none; margin: 0; }
         }
 
-        /* ==== 手機版／電腦版手動切換（不論實際視窗寬度，強制套用其中一種版面）==== */
         body.force-desktop { padding: 30px 20px; }
         body.force-desktop header { flex-direction: row; justify-content: space-between; align-items: center; }
         body.force-desktop .backup-btns { width: auto; }
@@ -519,7 +516,6 @@
         body.force-mobile .bill-page { grid-template-columns: 1fr; gap: 12px; }
         body.force-mobile .bill-card { max-width: 380px; margin: 0 auto; }
 
-        /* 完美修正手機/電腦瀏覽器列印：一頁絕對 10 張卡片 */
         @media print {
             html, body {
                 background: #fff !important;
@@ -528,7 +524,6 @@
                 width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
-                /* 強制列印背景色（否則瀏覽器預設會把底色印成白色，75元的灰底會不見） */
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -565,7 +560,6 @@
                 width: 100% !important;
             }
 
-            /* 實體頁面容器：精確控制 2欄 × 5行，高度268mm安全放進A4紙張 */
             .bill-page {
                 display: grid !important;
                 grid-template-columns: 96mm 96mm !important;
@@ -581,20 +575,17 @@
                 background: #fff !important;
                 overflow: hidden !important;
                 
-                /* 強制跳頁屬性 */
                 page-break-after: always !important;
                 break-after: page !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
 
-            /* 最後一頁取消換頁避免產生多餘空白頁 */
             .bill-page:last-child {
                 page-break-after: auto !important;
                 break-after: auto !important;
             }
 
-            /* 單張收據精確高度控制 52mm */
             .bill-card {
                 display: flex !important;
                 border: 1px solid #000 !important;
@@ -623,15 +614,16 @@
     <header>
         <h1>晚餐預訂系統 <span style="font-size:14px; color:var(--text-muted);">MUJI SIMPLICITY v10</span></h1>
         <div class="backup-btns">
+            <button onclick="uploadToCloud()" style="border-color:var(--success); color:var(--success);">☁️ 上傳雲端儲存</button>
+            <button onclick="downloadFromCloud()" style="border-color:var(--text-main);">☁️ 載入雲端備份</button>
+            <button onclick="setCloudUrlPrompt()" style="border-color:#2b6cb0; color:#2b6cb0;">⚙️ 設定雲端網址</button>
             <button onclick="exportData()">匯出備份 (JSON)</button>
             <button onclick="document.getElementById('importFile').click()">匯入備份</button>
             <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-            <button onclick="uploadToCloud()" style="border-color:var(--success); color:var(--success);">☁️ 上傳雲端儲存</button>
-            <button onclick="downloadFromCloud()" style="border-color:var(--text-main);">☁️ 載入雲端備份</button>
-            <button onclick="clearAllData()" style="border-color:var(--muji-red); color:var(--muji-red);">清空所有資料（新學期）</button>
+            <button onclick="clearAllData()" style="border-color:var(--muji-red); color:var(--muji-red);">清空所有資料</button>
             <button id="view-mode-btn" onclick="toggleViewMode()">切換手機/電腦版</button>
         </div>
-        <div id="sync-status" style="font-size:12px; color:var(--text-muted);"></div>
+        <div id="sync-status" style="font-size:12px; color:var(--text-muted); font-weight:500;"></div>
     </header>
 
     <div class="nav-tabs">
@@ -890,14 +882,18 @@
 
     let batchSelectedDates = []; 
     let batchCurrentYear = new Date().getFullYear();
-    let batchCurrentMonth = new Date().getMonth(); // 0-indexed（與下方月曆邏輯相符）
+    let batchCurrentMonth = new Date().getMonth();
 
-    // ==== 雲端同步設定（Google Apps Script）====
-    // 把部署好的 Apps Script 網頁應用程式網址貼在下面的引號中
-    const CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbz1gy-BPrvZ8wgaIDO3dw4nMCnQ5AqYrRFpCGx_4extnKaBnWhHeLvBoMaoNNqTPS7d/exec";
+    // ==== 雲端同步網址設定 (可以使用預設，亦可在網頁點選「⚙️ 設定雲端網址」儲存) ====
+    let CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbznyF1ApvhgJPJaUAbML779uQ3oGlmhHM194ZgXK_AMkbgO8PMhUcus52nPfT8rFGgH/exec";
+
+    function getCloudUrl() {
+        return localStorage.getItem('muji_cloud_sync_url') || CLOUD_SYNC_URL;
+    }
 
     function isCloudConfigured() {
-        return CLOUD_SYNC_URL && !CLOUD_SYNC_URL.includes("請貼上");
+        const url = getCloudUrl();
+        return url && !url.includes("請貼上") && url.trim().startsWith("https://script.google.com");
     }
 
     function updateSyncStatus(text, isError) {
@@ -907,76 +903,103 @@
         el.style.color = isError ? 'var(--muji-red)' : 'var(--text-muted)';
     }
 
-    // 手動「上傳雲端儲存」：把目前畫面上的完整資料上傳，覆蓋雲端原本的備份
-    async function uploadToCloud() {
-        if (!isCloudConfigured()) {
-            alert('尚未設定雲端同步網址，請先按照說明部署 Google Apps Script 並貼上網址。');
-            return;
-        }
-        if (!confirm('確定要把目前畫面上的資料上傳，覆蓋雲端原本的備份嗎？')) return;
-        try {
-            updateSyncStatus('上傳中...');
-            const res = await fetch(CLOUD_SYNC_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'save', data: db })
-            });
-            const result = await res.json();
-            if (result.status === 'ok') {
-                updateSyncStatus('已上傳至雲端 ✓ (' + new Date().toLocaleTimeString('zh-TW') + ')');
+    function setCloudUrlPrompt() {
+        const current = getCloudUrl().includes("請貼上") ? "" : getCloudUrl();
+        const newUrl = prompt("請貼上您的 Google Apps Script 網頁應用程式 URL：", current);
+        if (newUrl !== null) {
+            localStorage.setItem('muji_cloud_sync_url', newUrl.trim());
+            CLOUD_SYNC_URL = newUrl.trim();
+            if (isCloudConfigured()) {
+                alert("雲端網址設定成功！系統將立即連線載入資料。");
+                autoLoadFromCloud();
             } else {
-                updateSyncStatus('上傳失敗：' + (result.message || '未知錯誤'), true);
+                alert("網址已儲存。請確保貼上的網址是以 https://script.google.com 開頭的部署網址。");
             }
-        } catch (e) {
-            console.error(e);
-            updateSyncStatus('上傳失敗，請檢查網路連線', true);
         }
     }
 
-    // 手動「載入雲端備份」：把雲端目前的備份抓下來，覆蓋畫面上的資料
-    async function downloadFromCloud() {
+    // 上傳資料至雲端
+    async function uploadToCloud(isSilent = false) {
         if (!isCloudConfigured()) {
-            alert('尚未設定雲端同步網址，請先按照說明部署 Google Apps Script 並貼上網址。');
+            if (!isSilent) alert('尚未設定雲端同步網址，請先點擊「⚙️ 設定雲端網址」貼上 Google Apps Script 部署網址。');
             return;
         }
         try {
-            updateSyncStatus('讀取雲端備份中...');
-            const res = await fetch(CLOUD_SYNC_URL + '?action=load');
+            updateSyncStatus('☁️ 雲端同步中...');
+            const res = await fetch(getCloudUrl(), {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'save', data: db }),
+                redirect: 'follow'
+            });
+            const result = await res.json();
+            if (result.status === 'ok') {
+                updateSyncStatus('☁️ 已同步至雲端 (' + new Date().toLocaleTimeString('zh-TW') + ')');
+            } else {
+                updateSyncStatus('❌ 雲端同步失敗：' + (result.message || '未知錯誤'), true);
+            }
+        } catch (e) {
+            console.error(e);
+            updateSyncStatus('❌ 雲端同步失敗，請檢查網路連線', true);
+        }
+    }
+
+    // 手動從雲端載入備份
+    async function downloadFromCloud() {
+        if (!isCloudConfigured()) {
+            alert('尚未設定雲端同步網址，請先點擊「⚙️ 設定雲端網址」貼上 Google Apps Script 部署網址。');
+            return;
+        }
+        if (!confirm('確定要載入雲端備份並覆蓋目前畫面的資料嗎？')) return;
+        await autoLoadFromCloud();
+    }
+
+    // 自動開啟頁面時從雲端讀取資料
+    async function autoLoadFromCloud() {
+        if (!isCloudConfigured()) return;
+        try {
+            updateSyncStatus('☁️ 正在連線雲端載入最新資料...');
+            const res = await fetch(getCloudUrl() + '?action=load', { redirect: 'follow' });
             const result = await res.json();
             if (result.status === 'ok' && result.data) {
-                const cloudData = result.data;
-                const cloudTime = cloudData.updatedAt ? new Date(cloudData.updatedAt).toLocaleString('zh-TW') : '未知時間';
-                const localTime = db.updatedAt ? new Date(db.updatedAt).toLocaleString('zh-TW') : '未知時間';
-
-                let msg = `確定要用雲端備份覆蓋目前畫面上的資料嗎？\n\n雲端備份時間：${cloudTime}\n目前本機資料時間：${localTime}\n\n目前尚未上傳的異動將會遺失，如果不確定，建議先按「上傳雲端儲存」保留現在的版本。`;
-                if ((db.updatedAt || 0) > (cloudData.updatedAt || 0)) {
-                    msg = '⚠️ 注意：目前畫面上的資料看起來比雲端備份還新，代表可能有還沒上傳的異動！\n\n' + msg;
-                }
-                if (!confirm(msg)) { updateSyncStatus('已取消載入'); return; }
-
-                db = cloudData;
+                db = result.data;
+                if(!db.students) db.students = {};
+                if(!db.orders) db.orders = {};
                 if(!db.canceledPaid) db.canceledPaid = {};
                 if(!db.dailyPrices) db.dailyPrices = {};
                 if(!db.monthlyBilling) db.monthlyBilling = {};
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
                 if(!db.config) db.config = { defaultPrice: 70 };
+                
                 localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
                 refreshAllUI();
                 togglePrintAllStudents(true);
-                updateSyncStatus('已載入雲端備份 ✓ (' + new Date().toLocaleTimeString('zh-TW') + ')');
+                updateSyncStatus('☁️ 已開啟雲端最新同步資料 (' + new Date().toLocaleTimeString('zh-TW') + ')');
             } else if (result.status === 'empty') {
-                alert('雲端目前還沒有任何備份資料，請先按「上傳雲端儲存」。');
-                updateSyncStatus('雲端目前沒有備份資料', true);
+                updateSyncStatus('☁️ 雲端尚無備份資料，請點選「☁️ 上傳雲端儲存」進行初始同步');
             } else {
-                updateSyncStatus('讀取失敗：' + (result.message || '未知錯誤'), true);
+                updateSyncStatus('❌ 讀取雲端失敗：' + (result.message || '未知錯誤'), true);
             }
         } catch (e) {
             console.error(e);
-            updateSyncStatus('讀取失敗，請檢查網路連線', true);
+            updateSyncStatus('❌ 無法連線雲端，目前顯示本機暫存資料', true);
         }
     }
 
-    // 自動動態生成月份選單選項 (涵蓋 2026 ~ 2027 年全月份)
+    let syncTimer = null;
+    function saveToLocalStorage() {
+        db.updatedAt = Date.now();
+        localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
+        
+        // 任何資料變動時，防彈背景自動同步雲端 (Debounce 800ms)
+        if (isCloudConfigured()) {
+            if (syncTimer) clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => {
+                uploadToCloud(true);
+            }, 800);
+        }
+    }
+
     function initMonthDropdowns() {
         const billingSelect = document.getElementById('billing-month-filter');
         const printSelect = document.getElementById('print-month-filter');
@@ -1011,15 +1034,12 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    // 依學生號碼排序（數字號碼會照數值大小排，例如 2 會排在 10 前面）
     function getSortedStudents() {
         return Object.values(db.students).sort((a, b) =>
             a.id.localeCompare(b.id, 'zh-Hant', { numeric: true })
         );
     }
 
-    // ==== 手機版／電腦版切換 ====
-    // 三段循環：自動（依實際螢幕寬度）→ 手機版 → 電腦版 → 自動...
     const VIEW_MODE_KEY = 'muji_dinner_view_mode';
 
     function applyViewMode(mode) {
@@ -1052,12 +1072,13 @@
         if (localData) {
             try {
                 db = JSON.parse(localData);
+                if(!db.students) db.students = {};
+                if(!db.orders) db.orders = {};
                 if(!db.canceledPaid) db.canceledPaid = {};
                 if(!db.dailyPrices) db.dailyPrices = {};
                 if(!db.monthlyBilling) db.monthlyBilling = {};
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
                 if(!db.config) db.config = { defaultPrice: 70 };
-                else db.config.defaultPrice = 70;
             } catch(e) { console.error("資料讀取失敗"); }
         } else {
             usedDemoData = true;
@@ -1066,58 +1087,26 @@
                 "02": { id: "02", name: "陳小美" },
                 "03": { id: "03", name: "王阿明" }
             };
-            db.orders = {
-                "2026-06-01": { "01": { ordered: true, note: "不要辣" }, "02": { ordered: true, note: "" } },
-                "2026-06-02": { "01": { ordered: true, note: "不要辣" }, "03": { ordered: true, note: "" } },
-                "2026-07-01": { "01": { ordered: true, note: "雞腿飯" }, "02": { ordered: true, note: "" } }
-            };
-            db.monthlyBilling = {
-                "2026-06": {
-                    "01": { isPaid: true, amount: 200, note: "上月溢繳示範", paidAt: "2026/06/30 17:00" },
-                    "02": { isPaid: true, amount: 50, note: "上月少繳示範", paidAt: "2026/06/30 18:00" }
-                }
-            };
+            db.orders = {};
+            db.monthlyBilling = {};
             db.postPaymentChanges = {};
         }
 
         document.getElementById('overview-date').value = getTodayStr();
         document.getElementById('billing-month-filter').value = getCurrentYearMonthStr();
         document.getElementById('print-month-filter').value = getCurrentYearMonthStr();
+        
         if (usedDemoData) saveToLocalStorage();
         refreshAllUI();
         togglePrintAllStudents(true);
 
+        // 重新開啟網頁時自動同步雲端資料
         if (isCloudConfigured()) {
-            updateSyncStatus('已設定雲端同步，請視需要按「上傳雲端儲存」或「載入雲端備份」');
+            await autoLoadFromCloud();
         } else {
-            updateSyncStatus('尚未設定雲端同步網址，目前僅使用本機資料');
+            updateSyncStatus('未設定雲端網址，請按「⚙️ 設定雲端網址」填入 GAS 部署網址以啟用自動儲存');
         }
     }
-
-    function saveToLocalStorage() {
-        db.updatedAt = Date.now();
-        localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
-    }
-
-    // 保險機制：離開頁面／切換分頁／關閉視窗前，自動把目前資料補送一次到雲端，
-    // 避免「改完忘記按上傳雲端儲存」導致這台裝置的最新異動遺失。
-    // （這只是背後的安全網，平常同步還是以「上傳雲端儲存／載入雲端備份」兩個按鈕為主）
-    function flushPendingSync() {
-        if (!isCloudConfigured()) return;
-        try {
-            const blob = new Blob(
-                [JSON.stringify({ action: 'save', data: db })],
-                { type: 'text/plain;charset=utf-8' }
-            );
-            navigator.sendBeacon(CLOUD_SYNC_URL, blob);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    window.addEventListener('beforeunload', flushPendingSync);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') flushPendingSync();
-    });
 
     function refreshAllUI() {
         renderDailyOverview();
@@ -1136,7 +1125,7 @@
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         refreshAllUI();
     }
 
@@ -1166,8 +1155,6 @@
 
     function getLastMonthBalance(studentId, currentMonthStr) {
         const lastMonthStr = getLastMonthStr(currentMonthStr);
-        // 若上個月完全沒有這位學生的繳費紀錄，視同「未繳費」，而不是視為沒有欠款。
-        // 這樣即使老師沒有特地去該生的帳務頁存檔，上月未繳的餐費金額還是會自動被列入這個月的上月結餘（欠款）。
         const lastBilling = (db.monthlyBilling[lastMonthStr] && db.monthlyBilling[lastMonthStr][studentId])
             ? db.monthlyBilling[lastMonthStr][studentId]
             : { isPaid: false, amount: 0 };
@@ -1230,11 +1217,8 @@
         renderCurrentCashFlow();
     }
 
-    // 目前收支 = 全部已收金額（所有月份已標記「已繳費」的金額加總）
-    //          - 結至今日已訂餐金額（所有歷史訂餐紀錄中，日期 <= 今天的餐費總和）
     function computeCurrentCashFlow() {
         const todayStr = getTodayStr();
-
         let totalReceived = 0;
         Object.values(db.monthlyBilling).forEach(monthRecords => {
             Object.values(monthRecords).forEach(rec => {
@@ -1268,7 +1252,7 @@
         const inputPrice = parseInt(document.getElementById('daily-price').value);
         if(!dateStr) return;
         db.dailyPrices[dateStr] = isNaN(inputPrice) ? db.config.defaultPrice : inputPrice;
-        saveToLocalStorage(); renderDailyOverview(); alert('單價已更新');
+        saveToLocalStorage(); renderDailyOverview();
     }
 
     function toggleOrder(dateStr, studentId, targetStatus) {
@@ -1330,7 +1314,7 @@
         let id = document.getElementById('new-id').value.trim();
         if (!name) return alert('請輸入學生姓名');
         if (!id) id = generateNextTempId();
-        else if (db.students[id]) return alert('該自訂號碼已存在');
+        else if (db.students[id]) return alert('該號碼已存在');
         db.students[id] = { id, name };
         document.getElementById('new-name').value = '';
         document.getElementById('new-id').value = '';
@@ -1365,6 +1349,12 @@
 
         document.getElementById('batch-students-input').value = '';
         alert(`成功處理並匯入 ${count} 位學生資料！`);
+        saveToLocalStorage(); refreshAllUI();
+    }
+
+    function deleteStudent(id) {
+        if (!confirm(`確定要刪除學生 [${db.students[id].name} (${id})] 嗎？`)) return;
+        delete db.students[id];
         saveToLocalStorage(); refreshAllUI();
     }
 
@@ -1483,7 +1473,7 @@
                 }
             });
         });
-        saveToLocalStorage(); refreshAllUI(); alert('批次操作完成'); clearBatchSelection();
+        saveToLocalStorage(); refreshAllUI(); clearBatchSelection();
     }
 
     function populateStudentDropdowns() {
@@ -1497,7 +1487,6 @@
         renderBillingStudentButtons();
     }
 
-    // 按鈕式學生選擇（繳費與跨月核銷頁面）
     function renderBillingStudentButtons() {
         const container = document.getElementById('billing-student-buttons');
         if (!container) return;
@@ -1518,7 +1507,6 @@
         renderStudentBilling();
     }
 
-    // 按鈕式繳費狀態切換
     function setBillingStatus(isPaid) {
         document.getElementById('billing-status-select').value = isPaid ? "true" : "false";
         updateBillingStatusButtons(isPaid);
@@ -1579,11 +1567,14 @@
         tbody.innerHTML = '';
         const canceledDates = db.canceledPaid[id] || [];
         const monthCanceled = canceledDates.filter(d => d.startsWith(targetMonth));
+
         if (monthCanceled.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted); text-align:center;">此月份無付款後取消的紀錄</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:var(--text-muted); padding:10px;">本月無付款後取消之紀錄</td></tr>';
         } else {
-            monthCanceled.sort().forEach(date => {
-                tbody.innerHTML += `<tr><td>${date}</td><td style="color:var(--muji-red);">已付費取消 (此日扣款金額 $${getPriceForDate(date)} 元)</td></tr>`;
+            monthCanceled.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${d}</td><td><span class="status-badge status-canceled-paid">已付費取消</span></td>`;
+                tbody.appendChild(tr);
             });
         }
     }
@@ -1591,105 +1582,85 @@
     function saveStudentBilling() {
         const id = document.getElementById('billing-student-select').value;
         const targetMonth = document.getElementById('billing-month-filter').value;
-        if (!id) return;
+        if (!id || !targetMonth) return alert('請選擇學生與月份');
+
+        const isPaid = document.getElementById('billing-status-select').value === "true";
+        const amount = parseInt(document.getElementById('billing-amount-input').value) || 0;
+        const note = document.getElementById('billing-note-input').value.trim();
 
         if (!db.monthlyBilling[targetMonth]) db.monthlyBilling[targetMonth] = {};
-        
-        const isPaid = document.getElementById('billing-status-select').value === "true";
-        let paidAtTime = "";
-        
-        if (isPaid) {
-            if (db.monthlyBilling[targetMonth][id] && db.monthlyBilling[targetMonth][id].paidAt) {
-                paidAtTime = db.monthlyBilling[targetMonth][id].paidAt;
-            } else {
-                const now = new Date();
-                paidAtTime = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            }
-        }
-
         db.monthlyBilling[targetMonth][id] = {
             isPaid: isPaid,
-            amount: parseInt(document.getElementById('billing-amount-input').value) || 0,
-            note: document.getElementById('billing-note-input').value.trim(),
-            paidAt: paidAtTime
+            amount: amount,
+            note: note,
+            paidAt: isPaid ? (db.monthlyBilling[targetMonth][id]?.paidAt || new Date().toLocaleString('zh-TW')) : null
         };
 
-        saveToLocalStorage(); refreshAllUI(); alert('本月帳務核銷儲存成功！下月結轉將自動同步。');
+        saveToLocalStorage();
+        refreshAllUI();
+        alert('學生帳務資料已儲存！');
     }
 
     function renderPaidStudentsList() {
         const tbody = document.querySelector('#paid-students-table tbody');
+        if (!tbody) return;
         tbody.innerHTML = '';
-        const keyword = document.getElementById('search-paid-input').value.trim().toLowerCase();
-        let hasData = false;
+        const targetMonth = document.getElementById('billing-month-filter').value;
+        const keyword = (document.getElementById('search-paid-input')?.value || '').trim().toLowerCase();
+        let count = 0;
 
-        Object.keys(db.monthlyBilling).sort().reverse().forEach(monthStr => {
-            const studentsInMonth = db.monthlyBilling[monthStr];
-            Object.keys(studentsInMonth).forEach(studentId => {
-                const record = studentsInMonth[studentId];
-                const student = db.students[studentId];
-                if (!record.isPaid || !student) return;
-
-                if (keyword && !studentId.toLowerCase().includes(keyword) && !student.name.toLowerCase().includes(keyword)) return;
-                
-                hasData = true;
+        const monthRecords = db.monthlyBilling[targetMonth] || {};
+        getSortedStudents().forEach(student => {
+            const record = monthRecords[student.id];
+            if (record && record.isPaid) {
+                if (keyword && !student.id.toLowerCase().includes(keyword) && !student.name.toLowerCase().includes(keyword)) return;
+                count++;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${monthStr}</td>
-                    <td><strong>${studentId}</strong></td>
-                    <td>${student.name}</td>
+                    <td>${targetMonth}</td>
+                    <td>${student.id}</td>
+                    <td><strong>${student.name}</strong></td>
                     <td style="color:var(--success); font-weight:bold;">$${record.amount}</td>
-                    <td style="font-size:12px; color:var(--text-muted);">${record.note || '-'}</td>
-                    <td style="font-size:12px; color:var(--muji-red); font-weight:500;">${record.paidAt || '已確認'}</td>
-                    <td><button class="btn btn-sm" onclick="linkToStudentBilling('${studentId}', '${monthStr}')">快速切換</button></td>
+                    <td style="color:var(--text-muted);">${record.note || '-'}</td>
+                    <td style="font-size:11px; color:var(--text-muted);">${record.paidAt || '已確認'}</td>
+                    <td><button class="btn btn-sm" onclick="selectBillingStudent('${student.id}')">查看明細</button></td>
                 `;
                 tbody.appendChild(tr);
-            });
+            }
         });
 
-        if(!hasData) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">無符合的已繳費學生紀錄</td></tr>';
+        if (count === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:15px;">${targetMonth} 月份尚無符合的已繳費學生紀錄</td></tr>`;
         }
     }
 
-    function linkToStudentBilling(id, monthStr) {
-        document.getElementById('billing-student-select').value = id;
-        document.getElementById('billing-month-filter').value = monthStr;
-        renderStudentBilling();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     function renderGlobalLog() {
-        const logBox = document.getElementById('global-log'); logBox.innerHTML = ''; let hasLogs = false;
-        Object.keys(db.canceledPaid).forEach(id => {
-            const student = db.students[id]; const dates = db.canceledPaid[id] || [];
-            if (dates.length > 0 && student) {
-                hasLogs = true;
-                const dateDetails = dates.map(d => `${d}($${getPriceForDate(d)})`).join(', ');
-                logBox.innerHTML += `<div><strong>【${student.name}】</strong> 付款後取消： ${dateDetails}</div>`;
-            }
-        });
-        if(!hasLogs) logBox.innerHTML = '暫無任何異動情形。';
-    }
+        const container = document.getElementById('global-log');
+        if (!container) return;
+        let logs = [];
 
-    function deleteStudent(id) {
-        if (confirm('確定刪除該學生？')) {
-            delete db.students[id]; 
-            if(db.canceledPaid[id]) delete db.canceledPaid[id]; 
-            if(db.postPaymentChanges && db.postPaymentChanges[id]) delete db.postPaymentChanges[id];
-            Object.keys(db.monthlyBilling).forEach(m => { if(db.monthlyBilling[m][id]) delete db.monthlyBilling[m][id]; });
-            saveToLocalStorage(); refreshAllUI();
+        if (db.postPaymentChanges) {
+            Object.keys(db.postPaymentChanges).forEach(studentId => {
+                const sName = db.students[studentId] ? db.students[studentId].name : studentId;
+                db.postPaymentChanges[studentId].forEach(item => {
+                    logs.push(`[${item.dateStr}] 學生 ${sName}(${studentId}) 於付款後執行：${item.type === 'cancel' ? '取消訂餐' : '新增預訂'}`);
+                });
+            });
+        }
+
+        if (logs.length === 0) {
+            container.innerText = '暫無異動紀錄';
+        } else {
+            container.innerHTML = logs.map(l => `<div>• ${l}</div>`).join('');
         }
     }
 
     function renderPrintStudentCheckboxes() {
         const container = document.getElementById('print-student-checkboxes');
-        const checkedIds = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
-        const hasExistingCbs = container.querySelectorAll('input').length > 0;
+        if (!container) return;
         container.innerHTML = '';
         getSortedStudents().forEach(s => {
-            const isChecked = hasExistingCbs ? checkedIds.includes(s.id) : true;
-            container.innerHTML += `<label class="student-item"><input type="checkbox" name="print-student-cb" value="${s.id}" ${isChecked ? 'checked' : ''}><span>${s.name}</span></label>`;
+            container.innerHTML += `<label class="student-item"><input type="checkbox" name="print-student-cb" value="${s.id}" checked><span>${s.name} (${s.id})</span></label>`;
         });
     }
 
@@ -1699,180 +1670,168 @@
     }
 
     function generatePrintBills() {
-        const targetMonth = document.getElementById('print-month-filter').value;
         const outputZone = document.getElementById('bill-print-output-zone');
+        if (!outputZone) return;
         outputZone.innerHTML = '';
-        const checkboxes = document.querySelectorAll('input[name="print-student-cb"]:checked');
-        const selectedIds = Array.from(checkboxes).map(cb => cb.value);
 
-        if(!targetMonth || selectedIds.length === 0) {
-            outputZone.innerHTML = '<div style="text-align:center; padding: 40px; color:var(--text-muted);">請勾選學生</div>';
+        const targetMonth = document.getElementById('print-month-filter').value;
+        if (!targetMonth) return;
+
+        const [yearStr, monthStr] = targetMonth.split('-');
+        const year = parseInt(yearStr);
+        const month = parseInt(monthStr) - 1;
+
+        const checkboxes = document.querySelectorAll('input[name="print-student-cb"]:checked');
+        const selectedStudentIds = Array.from(checkboxes).map(cb => cb.value);
+
+        if (selectedStudentIds.length === 0) {
+            outputZone.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);">請先勾選欲產生的學生名單</div>';
             return;
         }
 
-        const parts = targetMonth.split('-');
-        const year = parseInt(parts[0]);
-        const monthIndex = parseInt(parts[1]) - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDayWeekIndex = new Date(year, month, 1).getDay();
 
-        let currentPageDiv = null;
+        const pages = [];
+        for (let i = 0; i < selectedStudentIds.length; i += 10) {
+            pages.push(selectedStudentIds.slice(i, i + 10));
+        }
 
-        selectedIds.forEach((id, index) => {
-            if (index % 10 === 0) {
-                currentPageDiv = document.createElement('div');
-                currentPageDiv.className = 'bill-page';
-                outputZone.appendChild(currentPageDiv);
-            }
+        pages.forEach((pageStudents) => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'bill-page';
 
-            const student = db.students[id];
-            if(!student) return;
+            pageStudents.forEach(studentId => {
+                const student = db.students[studentId];
+                if (!student) return;
 
-            let count70 = 0; let count75 = 0;
-            let orderedDatesThisMonth = [];
-            let orderNotesSet = new Set();
+                let orderCount = 0;
+                let normalCost = 0;
+                let notesSet = new Set();
 
-            Object.keys(db.orders).sort().forEach(dateStr => {
-                if (dateStr.startsWith(targetMonth)) {
-                    if (db.orders[dateStr][id] && db.orders[dateStr][id].ordered) {
-                        orderedDatesThisMonth.push(dateStr);
-                        if(getPriceForDate(dateStr) === 75) count75++; else count70++;
-                        
-                        if(db.orders[dateStr][id].note) {
-                            let noteText = db.orders[dateStr][id].note.trim();
-                            if (noteText && noteText !== "批次預訂" && noteText !== "個別手動調整") {
-                                orderNotesSet.add(noteText);
-                            }
-                        }
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+                    const order = db.orders[dateKey] && db.orders[dateKey][studentId];
+                    if (order && order.ordered) {
+                        orderCount++;
+                        normalCost += getPriceForDate(dateKey);
+                        if (order.note) notesSet.add(order.note);
                     }
                 }
+
+                const lastMonthBalance = getLastMonthBalance(studentId, targetMonth);
+                const finalTotal = normalCost - lastMonthBalance;
+                const notesArr = Array.from(notesSet);
+                const noteText = notesArr.length > 0 ? notesArr.join(', ') : '無備註';
+
+                let calHTML = '<div class="bill-cal-grid">';
+                const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+                weekdays.forEach(w => { calHTML += `<div class="bill-cal-header-text">${w}</div>`; });
+
+                for (let e = 0; e < firstDayWeekIndex; e++) { calHTML += '<div class="bill-cal-day empty"></div>'; }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+                    const order = db.orders[dateKey] && db.orders[dateKey][studentId];
+                    const isOrdered = order && order.ordered;
+                    const price = getPriceForDate(dateKey);
+                    
+                    let dayClass = 'bill-cal-day';
+                    if (isOrdered) dayClass += ' has-order';
+                    if (price === 75) dayClass += ' price-75';
+
+                    calHTML += `<div class="${dayClass}">${d}</div>`;
+                }
+                calHTML += '</div>';
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'bill-card';
+                cardDiv.innerHTML = `
+                    <div class="bill-left">
+                        <div>
+                            <div class="bill-student-name">${student.name} <span style="font-size:11px; font-weight:normal;">(${student.id})</span></div>
+                            <div style="font-size:10px; color:#555; margin-bottom:4px;">${targetMonth} 月晚餐繳費單</div>
+                            
+                            <div class="bill-price-row"><span>預訂天數：</span><span>${orderCount} 天</span></div>
+                            <div class="bill-price-row"><span>本月小計：</span><span>$${normalCost}</span></div>
+                            <div class="bill-price-row" style="color:#666;">
+                                <span>上月結轉：</span>
+                                <span>${lastMonthBalance > 0 ? `-$${lastMonthBalance}` : (lastMonthBalance < 0 ? `+$${Math.abs(lastMonthBalance)}` : '$0')}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bill-total-row">應繳總額：$${finalTotal > 0 ? finalTotal : 0}</div>
+                        </div>
+                    </div>
+                    <div class="bill-right">
+                        <div>
+                            <div class="bill-title" style="text-align:center;">${yearStr}/${monthStr} 訂餐月曆</div>
+                            ${calHTML}
+                        </div>
+                        <div class="bill-note-area">
+                            <strong>備註：</strong>${noteText}
+                        </div>
+                    </div>
+                `;
+                pageDiv.appendChild(cardDiv);
             });
 
-            const normalCost = (count70 * 70) + (count75 * 75);
-            const balance = getLastMonthBalance(id, targetMonth); 
-            const finalTotal = normalCost - balance;
-            const showMonth = parts[1].replace(/^0/, '');
-
-            const billCard = document.createElement('div');
-            billCard.className = 'bill-card';
-
-            const leftDiv = document.createElement('div');
-            leftDiv.className = 'bill-left';
-            
-            let balanceText = "0 元";
-            if (balance > 0) balanceText = `退 ${balance} 元 (溢繳)`;
-            else if (balance < 0) balanceText = `補 ${Math.abs(balance)} 元 (欠款)`;
-
-            leftDiv.innerHTML = `
-                <div>
-                    <div class="bill-student-name">${student.name}</div>
-                    <div class="bill-title">${showMonth} 月餐費單</div>
-                    <div class="bill-price-row"><span>70 元</span><span>${count70} 天</span></div>
-                    <div class="bill-price-row"><span>75 元</span><span>${count75} 天</span></div>
-                    <div class="bill-price-row" style="color:#555; margin-top:2px; font-size:9.5px;"><span>上月結餘</span><span>${balanceText}</span></div>
-                </div>
-                <div class="bill-total-row" style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span style="font-size: 9px; font-weight: normal; color: #000; text-align: left;">萊諾 曹老師</span>
-                    <span>應繳 ${finalTotal} 元</span>
-                </div>
-            `;
-
-            const rightDiv = document.createElement('div');
-            rightDiv.className = 'bill-right';
-            
-            let calGridHTML = '<div class="bill-cal-grid">';
-            ["日", "一", "二", "三", "四", "五", "六"].forEach(w => { calGridHTML += `<div class="bill-cal-header-text">${w}</div>`; });
-
-            const firstDayIndex = new Date(year, monthIndex, 1).getDay();
-            const totalDays = new Date(year, monthIndex + 1, 0).getDate();
-
-            for (let i = 0; i < firstDayIndex; i++) { calGridHTML += '<div class="bill-cal-day empty"></div>'; }
-            for (let day = 1; day <= totalDays; day++) {
-                const dStr = String(day).padStart(2, '0');
-                const fullDateStr = `${targetMonth}-${dStr}`;
-                let dayClass = 'bill-cal-day';
-                let dayDisplay = day;
-
-                if (orderedDatesThisMonth.includes(fullDateStr)) {
-                    dayClass += ' has-order';
-                    if(getPriceForDate(fullDateStr) === 75) dayClass += ' price-75';
-                } else {
-                    dayClass += ' empty';
-                    dayDisplay = `<span style="color:#ccc">${day}</span>`;
-                }
-                calGridHTML += `<div class="${dayClass}">${dayDisplay}</div>`;
-            }
-            calGridHTML += '</div>';
-
-            let lastMonthStr = getLastMonthStr(targetMonth);
-            let postPaymentNotes = [];
-            if (db.postPaymentChanges && db.postPaymentChanges[id]) {
-                db.postPaymentChanges[id].forEach(change => {
-                    if (change.dateStr.startsWith(lastMonthStr)) {
-                        let dayPart = change.dateStr.substring(5).replace('-', '/');
-                        let label = change.type === 'cancel' ? '取消' : '加訂';
-                        postPaymentNotes.push(`${dayPart}${label}`);
-                    }
-                });
-            }
-
-            let finalNoteParts = [];
-            if (orderNotesSet.size > 0) {
-                finalNoteParts.push(Array.from(orderNotesSet).join('；'));
-            }
-            if (postPaymentNotes.length > 0) {
-                finalNoteParts.push(`上月異動：${postPaymentNotes.join(', ')}`);
-            }
-            const finalNoteString = finalNoteParts.length > 0 ? finalNoteParts.join(' ｜ ') : '無';
-            const noteContent = `<strong>訂餐備註：</strong>${finalNoteString}`;
-
-            rightDiv.innerHTML = `
-                <div>
-                    <div style="font-weight:bold; font-size:10px; text-align:center;">${showMonth}月份訂餐日曆明細</div>
-                    ${calGridHTML}
-                </div>
-                <div class="bill-note-area">${noteContent}</div>
-            `;
-
-            billCard.appendChild(leftDiv); billCard.appendChild(rightDiv);
-            currentPageDiv.appendChild(billCard);
+            outputZone.appendChild(pageDiv);
         });
-    }
-
-    function clearAllData() {
-        if (!confirm('確定要清空所有資料嗎？\n\n這會刪除所有學生名單、訂餐紀錄與帳務資料，且無法復原！\n\n建議先按「匯出備份 (JSON)」保留一份存檔。')) return;
-        if (!confirm('請再次確認：真的要清空全部資料，開始新學期嗎？')) return;
-
-        db = {
-            students: {},
-            orders: {},
-            canceledPaid: {},
-            dailyPrices: {},
-            monthlyBilling: {},
-            postPaymentChanges: {},
-            config: { defaultPrice: 70 }
-        };
-
-        saveToLocalStorage();
-        refreshAllUI();
-        togglePrintAllStudents(true);
-        alert('資料已清空，可以開始新學期囉！\n\n提醒：這只清空了本機資料，如果雲端也要清空，請記得再按一次「上傳雲端儲存」。');
     }
 
     function exportData() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
         const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr); downloadAnchor.setAttribute("download", `dinner_backups_v10.json`);
-        document.body.appendChild(downloadAnchor); downloadAnchor.click(); downloadAnchor.remove();
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `dinner_backup_${getTodayStr()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
     }
 
     function importData(event) {
-        const file = event.target.files[0]; if (!file) return;
+        const file = event.target.files[0];
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                db = JSON.parse(e.target.result); saveToLocalStorage(); refreshAllUI(); alert('匯入成功');
-            } catch (err) { alert('檔案錯誤'); }
+                const importedDb = JSON.parse(e.target.result);
+                if (confirm('確定要匯入備份資料嗎？這將覆蓋現有資料。')) {
+                    db = importedDb;
+                    if(!db.canceledPaid) db.canceledPaid = {};
+                    if(!db.dailyPrices) db.dailyPrices = {};
+                    if(!db.monthlyBilling) db.monthlyBilling = {};
+                    if(!db.postPaymentChanges) db.postPaymentChanges = {};
+                    if(!db.config) db.config = { defaultPrice: 70 };
+                    saveToLocalStorage();
+                    refreshAllUI();
+                    alert('資料匯入成功！');
+                }
+            } catch (err) {
+                alert('備份檔案格式不正確！');
+            }
         };
         reader.readAsText(file);
+    }
+
+    function clearAllData() {
+        if (confirm('⚠️ 警告：確定要清空所有資料嗎？')) {
+            if (confirm('再次確認：是否徹底清空重置所有資料？')) {
+                db = {
+                    students: {},
+                    orders: {},
+                    canceledPaid: {},
+                    dailyPrices: {},
+                    monthlyBilling: {},
+                    postPaymentChanges: {},
+                    config: { defaultPrice: 70 }
+                };
+                saveToLocalStorage();
+                refreshAllUI();
+                alert('所有資料已重置。');
+            }
+        }
     }
 
     window.onload = init;
