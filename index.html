@@ -218,6 +218,7 @@
         }
         .choice-btn.paid-btn.active { background-color: var(--success); border-color: var(--success); }
         .choice-btn.unpaid-btn.active { background-color: var(--muji-red); border-color: var(--muji-red); }
+        .choice-btn.unpaid-flag { border-color: var(--muji-red); color: var(--muji-red); background-color: #FBF0EF; font-weight: bold; }
         .status-btn-group { display: flex; gap: 10px; margin-top: 8px; }
         .status-btn-group .choice-btn { flex: 1; text-align: center; padding: 12px; font-size: 14px; border-radius: 4px; }
 
@@ -818,6 +819,30 @@
                 <button class="btn" style="background-color: var(--success);" onclick="saveStudentBilling()">儲存本月帳務</button>
             </div>
 
+            <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">本月收款紀錄（可分次登記：例如臨時加訂餐後才另外收款）</h4>
+            <div class="flex-row" style="margin-top:10px;">
+                <div>
+                    <label>本次收款金額 ($)</label>
+                    <input type="number" id="billing-payment-amount-input" placeholder="例如 70">
+                </div>
+                <div>
+                    <label>本次收款日期</label>
+                    <input type="date" id="billing-payment-date-input">
+                </div>
+                <div>
+                    <label>備註（選填）</label>
+                    <input type="text" id="billing-payment-note-input" placeholder="例如：補繳9/5加訂晚餐">
+                </div>
+                <button class="btn" onclick="addBillingPayment()">＋ 新增這筆收款</button>
+            </div>
+            <div class="table-responsive">
+                <table id="billing-payments-table">
+                    <thead><tr><th>收款日期</th><th>金額</th><th>備註</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div style="margin-top:8px; font-size:13px; color:var(--text-muted);">本月累計已收：<strong id="billing-payments-total" style="color:var(--success);">$0</strong>（會自動加總到上方「本月實際收取金額」欄位，並自動標記為已繳費）</div>
+
             <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">該生付款後取消明細：</h4>
             <div class="table-responsive">
                 <table id="canceled-paid-table">
@@ -827,6 +852,21 @@
             </div>
         </div>
         
+        <div style="background:#FBF0EF; border:1px solid var(--muji-red); padding:15px; border-radius:4px; margin-bottom:25px;">
+            <h3 style="margin-top:0; color:var(--muji-red);">⚠️ 本月未繳費學生名單（依「結算月份」篩選）</h3>
+            <div class="form-group" style="margin-top:10px;">
+                <input type="text" id="search-unpaid-input" oninput="renderUnpaidStudentsList()" placeholder="輸入姓名或代碼篩選未繳費名單...">
+            </div>
+            <div class="table-responsive">
+                <table style="background:#fff;" id="unpaid-students-table">
+                    <thead>
+                        <tr><th>代碼/號碼</th><th>姓名</th><th>本月訂餐費用</th><th>建議應繳（含上月結轉）</th><th>快速切換</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
         <div style="background: var(--hover-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 4px; margin-bottom: 25px;">
             <h3 style="margin-top:0; color:var(--success);">🔍 已繳費學生快速查閱台</h3>
             <div class="form-group" style="margin-top:10px;">
@@ -894,7 +934,7 @@
 
     // ==== 雲端同步設定（Google Apps Script）====
     // 把部署好的 Apps Script 網頁應用程式網址貼在下面的引號中
-    const CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbxgP7aV0yL9mGJ2YCI4e79ugHVeA7xUqah7lLu8pyJoyP220_8uEyztpIlU9ZOAj_Li/exec";
+    const CLOUD_SYNC_URL = "請貼上您的 Google Apps Script 網頁應用程式網址";
 
     function isCloudConfigured() {
         return CLOUD_SYNC_URL && !CLOUD_SYNC_URL.includes("請貼上");
@@ -1502,12 +1542,21 @@
         const container = document.getElementById('billing-student-buttons');
         if (!container) return;
         const selectedId = document.getElementById('billing-student-select').value;
+        const targetMonth = document.getElementById('billing-month-filter').value;
         container.innerHTML = '';
         getSortedStudents().forEach(s => {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'choice-btn' + (s.id === selectedId ? ' active' : '');
-            btn.textContent = `${s.name} (${s.id})`;
+            let cls = 'choice-btn';
+            if (s.id === selectedId) cls += ' active';
+
+            const monthCost = calculateMonthCost(s.id, targetMonth);
+            const billing = (db.monthlyBilling[targetMonth] && db.monthlyBilling[targetMonth][s.id]) ? db.monthlyBilling[targetMonth][s.id] : { isPaid: false };
+            const isUnpaid = monthCost > 0 && !billing.isPaid;
+            if (isUnpaid && s.id !== selectedId) cls += ' unpaid-flag';
+
+            btn.className = cls;
+            btn.textContent = `${s.name} (${s.id})` + (isUnpaid ? ' ⚠︎' : '');
             btn.onclick = () => selectBillingStudent(s.id);
             container.appendChild(btn);
         });
@@ -1539,6 +1588,7 @@
         const targetMonth = document.getElementById('billing-month-filter').value;
         const area = document.getElementById('billing-detail-area');
         renderBillingStudentButtons();
+        renderUnpaidStudentsList();
         if (!id || !db.students[id]) { area.style.display = 'none'; return; }
         area.style.display = 'block';
         const student = db.students[id];
@@ -1575,6 +1625,22 @@
         document.getElementById('billing-amount-input').value = currentBilling.isPaid ? currentBilling.amount : (finalTotal > 0 ? finalTotal : 0);
         document.getElementById('billing-note-input').value = currentBilling.note || "";
 
+        // 本月收款紀錄（可分次登記）
+        const payments = currentBilling.payments || [];
+        const paymentsTbody = document.querySelector('#billing-payments-table tbody');
+        paymentsTbody.innerHTML = '';
+        if (payments.length === 0) {
+            paymentsTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">本月尚無收款紀錄</td></tr>';
+        } else {
+            payments.forEach((p, idx) => {
+                paymentsTbody.innerHTML += `<tr><td>${p.date}</td><td>$${p.amount}</td><td style="font-size:12px; color:var(--text-muted);">${p.note || '-'}</td><td><button class="btn btn-sm" style="color:var(--muji-red); border-color:var(--muji-red);" onclick="deleteBillingPayment(${idx})">刪除</button></td></tr>`;
+            });
+        }
+        document.getElementById('billing-payments-total').innerText = `$${payments.reduce((sum, p) => sum + p.amount, 0)}`;
+        document.getElementById('billing-payment-date-input').value = getTodayStr();
+        document.getElementById('billing-payment-amount-input').value = '';
+        document.getElementById('billing-payment-note-input').value = '';
+
         const tbody = document.querySelector('#canceled-paid-table tbody');
         tbody.innerHTML = '';
         const canceledDates = db.canceledPaid[id] || [];
@@ -1607,14 +1673,101 @@
             }
         }
 
+        const existingPayments = (db.monthlyBilling[targetMonth][id] && db.monthlyBilling[targetMonth][id].payments) || [];
+
         db.monthlyBilling[targetMonth][id] = {
             isPaid: isPaid,
             amount: parseInt(document.getElementById('billing-amount-input').value) || 0,
             note: document.getElementById('billing-note-input').value.trim(),
-            paidAt: paidAtTime
+            paidAt: paidAtTime,
+            payments: existingPayments
         };
 
         saveToLocalStorage(); refreshAllUI(); alert('本月帳務核銷儲存成功！下月結轉將自動同步。');
+    }
+
+    // 新增一筆收款紀錄（支援同月分次繳費，例如臨時加訂餐後另外收款）
+    function addBillingPayment() {
+        const id = document.getElementById('billing-student-select').value;
+        const targetMonth = document.getElementById('billing-month-filter').value;
+        if (!id) return;
+
+        const amount = parseInt(document.getElementById('billing-payment-amount-input').value);
+        if (!amount || amount <= 0) { alert('請先輸入這筆收款的金額'); return; }
+        const dateVal = document.getElementById('billing-payment-date-input').value || getTodayStr();
+        const note = document.getElementById('billing-payment-note-input').value.trim();
+
+        if (!db.monthlyBilling[targetMonth]) db.monthlyBilling[targetMonth] = {};
+        if (!db.monthlyBilling[targetMonth][id]) {
+            db.monthlyBilling[targetMonth][id] = { isPaid: false, amount: 0, note: "", payments: [] };
+        }
+        const rec = db.monthlyBilling[targetMonth][id];
+        if (!rec.payments) rec.payments = [];
+
+        rec.payments.push({ date: dateVal, amount, note });
+        rec.amount = rec.payments.reduce((sum, p) => sum + p.amount, 0);
+        rec.isPaid = true;
+        if (!rec.paidAt) {
+            const now = new Date();
+            rec.paidAt = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        }
+
+        saveToLocalStorage();
+        refreshAllUI();
+    }
+
+    function deleteBillingPayment(index) {
+        const id = document.getElementById('billing-student-select').value;
+        const targetMonth = document.getElementById('billing-month-filter').value;
+        if (!id || !db.monthlyBilling[targetMonth] || !db.monthlyBilling[targetMonth][id]) return;
+        if (!confirm('確定要刪除這筆收款紀錄嗎？')) return;
+
+        const rec = db.monthlyBilling[targetMonth][id];
+        if (!rec.payments) return;
+        rec.payments.splice(index, 1);
+        rec.amount = rec.payments.reduce((sum, p) => sum + p.amount, 0);
+        if (rec.payments.length === 0) rec.isPaid = false;
+
+        saveToLocalStorage();
+        refreshAllUI();
+    }
+
+    // 本月未繳費學生名單（依繳費頁面選擇的結算月份篩選；只列出這個月有訂餐但尚未標記已繳費的學生）
+    function renderUnpaidStudentsList() {
+        const targetMonth = document.getElementById('billing-month-filter').value;
+        const tbody = document.querySelector('#unpaid-students-table tbody');
+        if (!tbody || !targetMonth) return;
+        tbody.innerHTML = '';
+        const keyword = document.getElementById('search-unpaid-input').value.trim().toLowerCase();
+        let hasData = false;
+
+        getSortedStudents().forEach(s => {
+            const monthCost = calculateMonthCost(s.id, targetMonth);
+            if (monthCost <= 0) return; // 這個月沒訂餐，不列入未繳費名單
+
+            const billing = (db.monthlyBilling[targetMonth] && db.monthlyBilling[targetMonth][s.id]) ? db.monthlyBilling[targetMonth][s.id] : { isPaid: false };
+            if (billing.isPaid) return; // 已標記已繳費
+
+            if (keyword && !s.id.toLowerCase().includes(keyword) && !s.name.toLowerCase().includes(keyword)) return;
+
+            const balance = getLastMonthBalance(s.id, targetMonth);
+            const suggestedTotal = monthCost - balance;
+
+            hasData = true;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${s.id}</strong></td>
+                <td>${s.name}</td>
+                <td>$${monthCost}</td>
+                <td style="color:var(--muji-red); font-weight:bold;">$${suggestedTotal}</td>
+                <td><button class="btn btn-sm" onclick="linkToStudentBilling('${s.id}', '${targetMonth}')">快速切換</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if (!hasData) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success);">本月份目前沒有未繳費的學生 🎉</td></tr>';
+        }
     }
 
     function renderPaidStudentsList() {
@@ -1803,23 +1956,29 @@
             calGridHTML += '</div>';
 
             let lastMonthStr = getLastMonthStr(targetMonth);
-            let postPaymentNotes = [];
+            let addedDates = [];
+            let canceledDates = [];
             if (db.postPaymentChanges && db.postPaymentChanges[id]) {
                 db.postPaymentChanges[id].forEach(change => {
                     if (change.dateStr.startsWith(lastMonthStr)) {
                         let dayPart = change.dateStr.substring(5).replace('-', '/');
-                        let label = change.type === 'cancel' ? '取消' : '加訂';
-                        postPaymentNotes.push(`${dayPart}${label}`);
+                        if (change.type === 'cancel') canceledDates.push(dayPart);
+                        else addedDates.push(dayPart);
                     }
                 });
             }
+            addedDates.sort();
+            canceledDates.sort();
+            let postPaymentGroups = [];
+            if (addedDates.length > 0) postPaymentGroups.push(`加訂：${addedDates.join('、')}`);
+            if (canceledDates.length > 0) postPaymentGroups.push(`取消：${canceledDates.join('、')}`);
 
             let finalNoteParts = [];
             if (orderNotesSet.size > 0) {
                 finalNoteParts.push(Array.from(orderNotesSet).join('；'));
             }
-            if (postPaymentNotes.length > 0) {
-                finalNoteParts.push(`上月異動：${postPaymentNotes.join(', ')}`);
+            if (postPaymentGroups.length > 0) {
+                finalNoteParts.push(`上月異動：${postPaymentGroups.join('，')}`);
             }
             const finalNoteString = finalNoteParts.length > 0 ? finalNoteParts.join(' ｜ ') : '無';
             const noteContent = `<strong>訂餐備註：</strong>${finalNoteString}`;
