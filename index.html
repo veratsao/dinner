@@ -366,28 +366,27 @@
         .calendar-day.selected { background-color: var(--muji-red); color: #fff; border-color: var(--muji-red); }
         .calendar-day.empty { background: transparent; border: none; cursor: default; }
 
+        /* 學生選單：統一改為橫向並列 4 欄位，無卷軸，自然向下延伸 */
         .student-checkbox-list {
             border: 1px solid var(--border-color);
             padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
             background: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             border-radius: 4px;
         }
 
         .student-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-size: 13px;
             cursor: pointer;
         }
 
-        .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
-        .student-tag-muted { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px; }
+        .student-item input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--muji-red); flex-shrink: 0; }
+        .student-tag-muted { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 2px; }
 
         .print-preview-container {
             display: flex;
@@ -465,6 +464,13 @@
             height: 32px;
             overflow: hidden;
             line-height: 1.25;
+        }
+
+        @media (max-width: 767px) {
+            /* 手機版自動改為 2 欄，以防文字擠壓 */
+            .student-checkbox-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (min-width: 768px) {
@@ -740,6 +746,7 @@
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(false)">全不選</button>
                 </div>
             </div>
+            <!-- 批次預訂：橫向並列 4 欄位無卷軸 -->
             <div class="student-checkbox-list" id="batch-student-checkboxes"></div>
         </div>
 
@@ -922,6 +929,7 @@
                         <button class="btn btn-sm" onclick="togglePrintAllStudents(false)">全不選</button>
                     </div>
                 </div>
+                <!-- 列印繳費單：橫向並列 4 欄位無卷軸 -->
                 <div class="student-checkbox-list" id="print-student-checkboxes" onchange="generatePrintBills()"></div>
             </div>
         </div>
@@ -1433,6 +1441,7 @@
             db.students[studentId].fixedDays = db.students[studentId].fixedDays.filter(d => d !== dayVal);
         }
         saveToLocalStorage();
+        refreshAllUI();
     }
 
     function toggleImportPlaceholder(mode) {
@@ -1563,7 +1572,7 @@
                 const sortedDays = [...s.fixedDays].sort((a,b) => a - b);
                 daysText = `（週${sortedDays.map(d => dayNamesShort[d]).join('、')}）`;
             } else {
-                daysText = '（無固定標籤）';
+                daysText = '（無）';
             }
 
             container.innerHTML += `
@@ -1581,7 +1590,6 @@
             return;
         }
 
-        // 收集目前選取的所有日期對應的星期幾 (1~5)
         const selectedWeekdaysSet = new Set();
         batchSelectedDates.forEach(dateStr => {
             const parts = dateStr.split('-');
@@ -1605,7 +1613,6 @@
             const student = db.students[studentId];
             const studentDays = student && student.fixedDays ? student.fixedDays : [];
 
-            // 嚴格比對：學生設定的固定星期，必須與月曆選取的星期「完全相符」（集合完全相等）
             const isExactMatch = studentDays.length === selectedWeekdaysSet.size && 
                                  studentDays.every(d => selectedWeekdaysSet.has(d));
 
@@ -2023,7 +2030,7 @@
         container.innerHTML = '';
         getSortedStudents().forEach(s => {
             const isChecked = hasExistingCbs ? checkedIds.includes(s.id) : true;
-            container.innerHTML += `<label class="student-item"><input type="checkbox" name="print-student-cb" value="${s.id}" ${isChecked ? 'checked' : ''}><span>${s.name}</span></label>`;
+            container.innerHTML += `<label class="student-item"><input type="checkbox" name="print-student-cb" value="${s.id}" ${isChecked ? 'checked' : ''}><span>${s.name} (${s.id})</span></label>`;
         });
     }
 
