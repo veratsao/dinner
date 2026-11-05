@@ -815,29 +815,40 @@
                 <button class="btn" style="background-color: var(--success);" onclick="saveStudentBilling()">儲存本月帳務</button>
             </div>
 
-            <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">本月收款紀錄（可分次登記：例如臨時加訂餐後才另外收款）</h4>
+            <!-- 退費/補收登記模組 -->
+            <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">本月退費 / 補收異動登記</h4>
             <div class="flex-row" style="margin-top:10px;">
-                <div>
-                    <label>本次收款金額 ($)</label>
+                <div style="flex: 1;">
+                    <label>類別</label>
+                    <select id="billing-adjustment-type-input">
+                        <option value="add">＋ 補收金額 (加項)</option>
+                        <option value="refund">－ 退費金額 (減項)</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>異動金額 ($)</label>
                     <input type="number" id="billing-payment-amount-input" placeholder="例如 70">
                 </div>
-                <div>
-                    <label>本次收款日期</label>
+                <div style="flex: 1;">
+                    <label>登記日期</label>
                     <input type="date" id="billing-payment-date-input">
                 </div>
-                <div>
-                    <label>備註（選填）</label>
-                    <input type="text" id="billing-payment-note-input" placeholder="例如：補繳9/5加訂晚餐">
+                <div style="flex: 1.5;">
+                    <label>事由備註</label>
+                    <input type="text" id="billing-payment-note-input" placeholder="例如：9/5臨時加訂餐補收 / 9/12請假退餐">
                 </div>
-                <button class="btn" onclick="addBillingPayment()">＋ 新增這筆收款</button>
+                <button class="btn" onclick="addBillingPayment()">＋ 新增退補登記</button>
             </div>
             <div class="table-responsive">
                 <table id="billing-payments-table">
-                    <thead><tr><th>收款日期</th><th>金額</th><th>備註</th><th></th></tr></thead>
+                    <thead><tr><th>登記日期</th><th>類別</th><th>金額</th><th>事由備註</th><th>操作</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-            <div style="margin-top:8px; font-size:13px; color:var(--text-muted);">本月累計已收：<strong id="billing-payments-total" style="color:var(--success);">$0</strong>（會自動加總到上方「本月實際收取金額」欄位，並自動標記為已繳費）</div>
+            <div style="margin-top:8px; font-size:13px; color:var(--text-muted);">
+                退補結算：補收累計 <strong id="billing-add-total" style="color:var(--muji-red);">$0</strong> ｜ 退費累計 <strong id="billing-refund-total" style="color:var(--success);">$0</strong>
+                （將自動計算併入上方「本月實際收取金額」欄位）
+            </div>
 
             <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">該生付款後取消明細：</h4>
             <div class="table-responsive">
@@ -1027,7 +1038,7 @@
 
         const currentYear = new Date().getFullYear();
         const startYear = currentYear - 1;
-        const endYear = currentYear + 10; // 擴展往後 10 年
+        const endYear = currentYear + 10;
 
         for (let y = startYear; y <= endYear; y++) {
             billingYearSelect.innerHTML += `<option value="${y}">${y} 年</option>`;
@@ -1656,22 +1667,46 @@
         if (!db.monthlyBilling[targetMonth]) db.monthlyBilling[targetMonth] = {};
         const currentBilling = db.monthlyBilling[targetMonth][id] || { isPaid: false, amount: 0, note: "" };
 
+        const payments = currentBilling.payments || [];
+        let totalAdd = 0;
+        let totalRefund = 0;
+        payments.forEach(p => {
+            if (p.type === 'refund') totalRefund += p.amount;
+            else totalAdd += p.amount;
+        });
+
+        document.getElementById('billing-add-total').innerText = `$${totalAdd}`;
+        document.getElementById('billing-refund-total').innerText = `$${totalRefund}`;
+
+        // 重新統整計算實際收取金額：基準金額 + 補收金額 - 退費金額
+        let calculatedActualAmount = currentBilling.isPaid 
+            ? currentBilling.amount 
+            : Math.max(0, finalTotal + totalAdd - totalRefund);
+
         document.getElementById('billing-status-select').value = currentBilling.isPaid ? "true" : "false";
         updateBillingStatusButtons(currentBilling.isPaid);
-        document.getElementById('billing-amount-input').value = currentBilling.isPaid ? currentBilling.amount : (finalTotal > 0 ? finalTotal : 0);
+        document.getElementById('billing-amount-input').value = calculatedActualAmount;
         document.getElementById('billing-note-input').value = currentBilling.note || "";
 
-        const payments = currentBilling.payments || [];
         const paymentsTbody = document.querySelector('#billing-payments-table tbody');
         paymentsTbody.innerHTML = '';
         if (payments.length === 0) {
-            paymentsTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">本月尚無收款紀錄</td></tr>';
+            paymentsTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">本月尚無退費或補收登記紀錄</td></tr>';
         } else {
             payments.forEach((p, idx) => {
-                paymentsTbody.innerHTML += `<tr><td>${p.date}</td><td>$${p.amount}</td><td style="font-size:12px; color:var(--text-muted);">${p.note || '-'}</td><td><button class="btn btn-sm" style="color:var(--muji-red); border-color:var(--muji-red);" onclick="deleteBillingPayment(${idx})">刪除</button></td></tr>`;
+                const isRefund = p.type === 'refund';
+                const typeLabel = isRefund ? '<span style="color:var(--success); font-weight:bold;">－ 退費</span>' : '<span style="color:var(--muji-red); font-weight:bold;">＋ 補收</span>';
+                const amountLabel = isRefund ? `-$${p.amount}` : `+$${p.amount}`;
+                paymentsTbody.innerHTML += `<tr>
+                    <td>${p.date}</td>
+                    <td>${typeLabel}</td>
+                    <td style="font-weight:bold; color:${isRefund ? 'var(--success)' : 'var(--muji-red)'};">${amountLabel}</td>
+                    <td style="font-size:12px; color:var(--text-muted);">${p.note || '-'}</td>
+                    <td><button class="btn btn-sm" style="color:var(--muji-red); border-color:var(--muji-red);" onclick="deleteBillingPayment(${idx})">刪除</button></td>
+                </tr>`;
             });
         }
-        document.getElementById('billing-payments-total').innerText = `$${payments.reduce((sum, p) => sum + p.amount, 0)}`;
+
         document.getElementById('billing-payment-date-input').value = getTodayStr();
         document.getElementById('billing-payment-amount-input').value = '';
         document.getElementById('billing-payment-note-input').value = '';
@@ -1727,8 +1762,9 @@
         const targetMonth = getSelectedBillingMonthStr();
         if (!id) return;
 
+        const type = document.getElementById('billing-adjustment-type-input').value;
         const amount = parseInt(document.getElementById('billing-payment-amount-input').value);
-        if (!amount || amount <= 0) { alert('請先輸入這筆收款的金額'); return; }
+        if (!amount || amount <= 0) { alert('請先輸入有效的異動金額'); return; }
         const dateVal = document.getElementById('billing-payment-date-input').value || getTodayStr();
         const note = document.getElementById('billing-payment-note-input').value.trim();
 
@@ -1739,8 +1775,17 @@
         const rec = db.monthlyBilling[targetMonth][id];
         if (!rec.payments) rec.payments = [];
 
-        rec.payments.push({ date: dateVal, amount, note });
-        rec.amount = rec.payments.reduce((sum, p) => sum + p.amount, 0);
+        rec.payments.push({ type, date: dateVal, amount, note });
+        
+        // 重新加總金額並自動調整已收總額
+        const finalTotal = currentCalculatedNormalCost - currentCalculatedBalance;
+        let totalAdd = 0, totalRefund = 0;
+        rec.payments.forEach(p => {
+            if (p.type === 'refund') totalRefund += p.amount;
+            else totalAdd += p.amount;
+        });
+
+        rec.amount = Math.max(0, finalTotal + totalAdd - totalRefund);
         rec.isPaid = true;
         if (!rec.paidAt) {
             const now = new Date();
@@ -1755,13 +1800,23 @@
         const id = document.getElementById('billing-student-select').value;
         const targetMonth = getSelectedBillingMonthStr();
         if (!id || !db.monthlyBilling[targetMonth] || !db.monthlyBilling[targetMonth][id]) return;
-        if (!confirm('確定要刪除這筆收款紀錄嗎？')) return;
+        if (!confirm('確定要刪除這筆退補登記紀錄嗎？')) return;
 
         const rec = db.monthlyBilling[targetMonth][id];
         if (!rec.payments) return;
         rec.payments.splice(index, 1);
-        rec.amount = rec.payments.reduce((sum, p) => sum + p.amount, 0);
-        if (rec.payments.length === 0) rec.isPaid = false;
+        
+        const finalTotal = currentCalculatedNormalCost - currentCalculatedBalance;
+        let totalAdd = 0, totalRefund = 0;
+        rec.payments.forEach(p => {
+            if (p.type === 'refund') totalRefund += p.amount;
+            else totalAdd += p.amount;
+        });
+
+        rec.amount = Math.max(0, finalTotal + totalAdd - totalRefund);
+        if (rec.payments.length === 0 && rec.amount === finalTotal) {
+            // 保持原本狀態
+        }
 
         saveToLocalStorage();
         refreshAllUI();
