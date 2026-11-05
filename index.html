@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晚餐預訂系統 ｜ MUJI Style v10 </title>
+    <title>晚餐預訂系統 ｜ MUJI Style v10 (商務進階版)</title>
     <style>
         :root {
             --bg-color: #F4F1EA;
@@ -369,11 +369,11 @@
         .student-checkbox-list {
             border: 1px solid var(--border-color);
             padding: 12px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
             background: #fff;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 8px;
             border-radius: 4px;
         }
@@ -381,12 +381,13 @@
         .student-item {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             font-size: 13px;
             cursor: pointer;
         }
 
         .student-item input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--muji-red); }
+        .student-tag-muted { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px; }
 
         .print-preview-container {
             display: flex;
@@ -670,7 +671,7 @@
 
     <!-- 2. 學生管理 -->
     <div id="tab-students" class="panel">
-        <h2>學生名單管理</h2>
+        <h2>學生名單與固定每週點餐標籤管理</h2>
         <div class="flex-row" style="background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:4px;">
             <div style="flex:1;">
                 <label>個別新增：學生姓名</label>
@@ -703,7 +704,7 @@
 
         <div class="table-responsive">
             <table id="student-table">
-                <thead><tr><th>系統代碼</th><th>學生姓名</th><th>操作</th></tr></thead>
+                <thead><tr><th>系統代碼</th><th>學生姓名</th><th>固定每週點餐標籤設定 (勾選後會自動記憶)</th><th>操作</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -712,7 +713,7 @@
     <!-- 3. 批次預訂功能 -->
     <div id="tab-batch" class="panel">
         <h2>批次月曆預訂 / 取消</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日），勾選學生，填寫備註後執行。</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日），勾選學生，填寫備註後執行。您也可以利用右側按鈕一鍵「完全符合」套用學生的固定每週標籤。</p>
         
         <div class="calendar-container">
             <div class="calendar-header">
@@ -731,9 +732,10 @@
         </div>
 
         <div class="form-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap: wrap; gap: 8px;">
                 <label style="margin-bottom:0;"><strong>選擇訂餐學生</strong></label>
-                <div style="display: flex; gap: 5px;">
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="applyFixedWeeklySelection()">⚡ 一鍵勾選（完全符合所選星期）</button>
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(true)">全選</button>
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(false)">全不選</button>
                 </div>
@@ -815,7 +817,6 @@
                 <button class="btn" style="background-color: var(--success);" onclick="saveStudentBilling()">儲存本月帳務</button>
             </div>
 
-            <!-- 退費/補收登記模組 -->
             <h4 style="margin-top:20px; font-size:14px; border-bottom:1px solid var(--border-color); padding-bottom:5px;">本月退費 / 補收異動登記</h4>
             <div class="flex-row" style="margin-top:10px;">
                 <div style="flex: 1;">
@@ -1125,13 +1126,17 @@
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
                 if(!db.config) db.config = { defaultPrice: 70 };
                 else db.config.defaultPrice = 70;
+                
+                Object.values(db.students).forEach(s => {
+                    if (!s.fixedDays) s.fixedDays = [];
+                });
             } catch(e) { console.error("資料讀取失敗"); }
         } else {
             usedDemoData = true;
             db.students = {
-                "01": { id: "01", name: "林大林" },
-                "02": { id: "02", name: "陳小美" },
-                "03": { id: "03", name: "王阿明" }
+                "01": { id: "01", name: "林大林", fixedDays: [1, 2, 4, 5] },
+                "02": { id: "02", name: "陳小美", fixedDays: [1, 3, 5] },
+                "03": { id: "03", name: "王阿明", fixedDays: [1, 2, 4, 5] }
             };
             db.orders = {};
             db.monthlyBilling = {};
@@ -1388,12 +1393,46 @@
         const tbody = document.querySelector('#student-table tbody');
         tbody.innerHTML = '';
         const keyword = document.getElementById('search-student-input').value.trim().toLowerCase();
+        
+        const dayNames = { 1: '週一', 2: '週二', 3: '週三', 4: '週四', 5: '週五' };
+
         getSortedStudents().forEach(student => {
             if (keyword && !student.id.toLowerCase().includes(keyword) && !student.name.toLowerCase().includes(keyword)) return;
+            
+            if (!student.fixedDays) student.fixedDays = [];
+
+            let checkboxesHTML = '';
+            [1, 2, 3, 4, 5].forEach(d => {
+                const checked = student.fixedDays.includes(d) ? 'checked' : '';
+                checkboxesHTML += `<label style="display:inline-block; margin-right:8px; cursor:pointer; font-size:12px;">
+                    <input type="checkbox" value="${d}" ${checked} onchange="updateStudentFixedDays('${student.id}', this)"> ${dayNames[d]}
+                </label>`;
+            });
+
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${student.id}</td><td>${student.name}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${student.id}')">刪除</button></td>`;
+            tr.innerHTML = `
+                <td>${student.id}</td>
+                <td>${student.name}</td>
+                <td>${checkboxesHTML}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${student.id}')">刪除</button></td>
+            `;
             tbody.appendChild(tr);
         });
+    }
+
+    function updateStudentFixedDays(studentId, checkbox) {
+        if (!db.students[studentId]) return;
+        if (!db.students[studentId].fixedDays) db.students[studentId].fixedDays = [];
+        
+        const dayVal = parseInt(checkbox.value);
+        if (checkbox.checked) {
+            if (!db.students[studentId].fixedDays.includes(dayVal)) {
+                db.students[studentId].fixedDays.push(dayVal);
+            }
+        } else {
+            db.students[studentId].fixedDays = db.students[studentId].fixedDays.filter(d => d !== dayVal);
+        }
+        saveToLocalStorage();
     }
 
     function toggleImportPlaceholder(mode) {
@@ -1416,7 +1455,7 @@
         if (!name) return alert('請輸入學生姓名');
         if (!id) id = generateNextTempId();
         else if (db.students[id]) return alert('該自訂號碼已存在');
-        db.students[id] = { id, name };
+        db.students[id] = { id, name, fixedDays: [] };
         document.getElementById('new-name').value = '';
         document.getElementById('new-id').value = '';
         saveToLocalStorage(); refreshAllUI();
@@ -1438,12 +1477,12 @@
                 if(parts.length >= 2) {
                     const customId = parts[0].trim();
                     const customName = parts.slice(1).join(' ').trim();
-                    db.students[customId] = { id: customId, name: customName };
+                    db.students[customId] = { id: customId, name: customName, fixedDays: [] };
                     count++;
                 }
             } else {
                 const autoId = generateNextTempId();
-                db.students[autoId] = { id: autoId, name: cleaned };
+                db.students[autoId] = { id: autoId, name: cleaned, fixedDays: [] };
                 count++;
             }
         });
@@ -1516,9 +1555,65 @@
     function renderBatchStudentCheckboxes() {
         const container = document.getElementById('batch-student-checkboxes');
         container.innerHTML = '';
+        const dayNamesShort = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五' };
+
         getSortedStudents().forEach(s => {
-            container.innerHTML += `<label class="student-item"><input type="checkbox" name="batch-student-cb" value="${s.id}"><span>${s.name} (${s.id})</span></label>`;
+            let daysText = '';
+            if (s.fixedDays && s.fixedDays.length > 0) {
+                const sortedDays = [...s.fixedDays].sort((a,b) => a - b);
+                daysText = `（週${sortedDays.map(d => dayNamesShort[d]).join('、')}）`;
+            } else {
+                daysText = '（無固定標籤）';
+            }
+
+            container.innerHTML += `
+                <label class="student-item">
+                    <input type="checkbox" name="batch-student-cb" value="${s.id}">
+                    <span>${s.name} (${s.id}) <span class="student-tag-muted">${daysText}</span></span>
+                </label>`;
         });
+    }
+
+    // ⚡ 完全符合條件的一鍵自動勾選
+    function applyFixedWeeklySelection() {
+        if (batchSelectedDates.length === 0) {
+            alert('請先在上方月曆點選至少一個日期！');
+            return;
+        }
+
+        // 收集目前選取的所有日期對應的星期幾 (1~5)
+        const selectedWeekdaysSet = new Set();
+        batchSelectedDates.forEach(dateStr => {
+            const parts = dateStr.split('-');
+            const dObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            const wDay = dObj.getDay(); 
+            if (wDay >= 1 && wDay <= 5) {
+                selectedWeekdaysSet.add(wDay);
+            }
+        });
+
+        if (selectedWeekdaysSet.size === 0) {
+            alert('您目前選取的日期全部都是週末，沒有平日！');
+            return;
+        }
+
+        const checkboxes = document.querySelectorAll('input[name="batch-student-cb"]');
+        let matchedCount = 0;
+
+        checkboxes.forEach(cb => {
+            const studentId = cb.value;
+            const student = db.students[studentId];
+            const studentDays = student && student.fixedDays ? student.fixedDays : [];
+
+            // 嚴格比對：學生設定的固定星期，必須與月曆選取的星期「完全相符」（集合完全相等）
+            const isExactMatch = studentDays.length === selectedWeekdaysSet.size && 
+                                 studentDays.every(d => selectedWeekdaysSet.has(d));
+
+            cb.checked = isExactMatch;
+            if (isExactMatch) matchedCount++;
+        });
+
+        alert(`已完成比對！已為您自動勾選固定標籤「完全符合」所選星期的學生（共 ${matchedCount} 位）。`);
     }
 
     function toggleSelectAllStudents(isSelected) {
@@ -1678,7 +1773,6 @@
         document.getElementById('billing-add-total').innerText = `$${totalAdd}`;
         document.getElementById('billing-refund-total').innerText = `$${totalRefund}`;
 
-        // 重新統整計算實際收取金額：基準金額 + 補收金額 - 退費金額
         let calculatedActualAmount = currentBilling.isPaid 
             ? currentBilling.amount 
             : Math.max(0, finalTotal + totalAdd - totalRefund);
@@ -1777,7 +1871,6 @@
 
         rec.payments.push({ type, date: dateVal, amount, note });
         
-        // 重新加總金額並自動調整已收總額
         const finalTotal = currentCalculatedNormalCost - currentCalculatedBalance;
         let totalAdd = 0, totalRefund = 0;
         rec.payments.forEach(p => {
@@ -1814,9 +1907,6 @@
         });
 
         rec.amount = Math.max(0, finalTotal + totalAdd - totalRefund);
-        if (rec.payments.length === 0 && rec.amount === finalTotal) {
-            // 保持原本狀態
-        }
 
         saveToLocalStorage();
         refreshAllUI();
