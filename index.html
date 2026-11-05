@@ -59,6 +59,7 @@
             display: flex;
             gap: 8px;
             width: 100%;
+            flex-wrap: wrap;
         }
 
         .backup-btns button {
@@ -72,6 +73,7 @@
             transition: all 0.2s;
             text-align: center;
             border-radius: 4px;
+            min-width: 120px;
         }
 
         .backup-btns button:hover {
@@ -272,7 +274,6 @@
         }
         .status-ordered { background: #E8F0E6; color: var(--success); }
         .status-none { background: #F0F0F0; color: var(--text-muted); }
-        .status-canceled-paid { background: #F9EBEA; color: var(--muji-red); font-weight: bold; }
 
         .flex-row {
             display: flex;
@@ -366,7 +367,7 @@
         .calendar-day.selected { background-color: var(--muji-red); color: #fff; border-color: var(--muji-red); }
         .calendar-day.empty { background: transparent; border: none; cursor: default; }
 
-        /* 學生選單：統一改為橫向並列 4 欄位，無卷軸，自然向下延伸 */
+        /* 學生選單：4欄並列，無卷軸 */
         .student-checkbox-list {
             border: 1px solid var(--border-color);
             padding: 12px;
@@ -386,7 +387,31 @@
         }
 
         .student-item input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--muji-red); flex-shrink: 0; }
-        .student-tag-muted { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 2px; }
+        
+        .weekday-badges {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .weekday-badge {
+            display: inline-block;
+            background-color: #EFECE6;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 11px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .weekday-badge.none {
+            background-color: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0;
+            font-weight: normal;
+        }
 
         .print-preview-container {
             display: flex;
@@ -467,7 +492,6 @@
         }
 
         @media (max-width: 767px) {
-            /* 手機版自動改為 2 欄，以防文字擠壓 */
             .student-checkbox-list {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -638,6 +662,7 @@
         <button class="tab-btn" onclick="switchTab('tab-batch')">批次預訂</button>
         <button class="tab-btn" onclick="switchTab('tab-billing')">繳費與跨月核銷</button>
         <button class="tab-btn" onclick="switchTab('tab-print-view')" style="color:var(--muji-red); font-weight:bold;">◤ 列印繳費單</button>
+        <button class="tab-btn" onclick="switchTab('tab-settings')" style="font-weight:bold;">⚙️ 系統設定</button>
     </div>
 
     <!-- 1. 每日總覽 -->
@@ -661,10 +686,10 @@
             <div class="card"><div class="title">今日訂餐人數</div><div class="value" id="sum-count">0 人</div></div>
             <div class="card"><div class="title">當日設定單價</div><div class="value" id="sum-price">$70</div></div>
             <div class="card"><div class="title">今日總金額</div><div class="value" style="color:var(--muji-red)" id="sum-total">$0</div></div>
-            <div class="card"><div class="title">目前收支（已收−已訂餐）</div><div class="value" id="sum-cashflow">$0</div></div>
+            <div class="card"><div class="title">目前收支（現存所有已收總額 − 截至今日應扣總餐費）</div><div class="value" id="sum-cashflow">$0</div></div>
         </div>
 
-        <h3 style="color:var(--success)">當日訂餐名單 (僅顯示有訂餐/已付款取消學生)</h3>
+        <h3 style="color:var(--success)">當日訂餐名單 (僅顯示實際訂餐學生)</h3>
         <div class="table-responsive">
             <table id="daily-table">
                 <thead>
@@ -685,7 +710,7 @@
             </div>
             <div style="flex:1;">
                 <label>自訂號碼 (選填)</label>
-                <input type="text" id="new-id" placeholder="留空則自動編號">
+                <input type="text" id="new-id" placeholder="自動編號">
             </div>
             <button class="btn" onclick="addSingleStudent()">新增學生</button>
         </div>
@@ -710,7 +735,7 @@
 
         <div class="table-responsive">
             <table id="student-table">
-                <thead><tr><th>系統代碼</th><th>學生姓名</th><th>固定每週點餐標籤設定 (勾選後會自動記憶)</th><th>操作</th></tr></thead>
+                <thead><tr><th>系統代碼</th><th>學生姓名</th><th>固定每週點餐標籤設定</th><th>操作</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -719,7 +744,7 @@
     <!-- 3. 批次預訂功能 -->
     <div id="tab-batch" class="panel">
         <h2>批次月曆預訂 / 取消</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日），勾選學生，填寫備註後執行。您也可以利用右側按鈕一鍵「完全符合」套用學生的固定每週標籤。</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日，系統將自動略過設定中的國定假日），勾選學生，填寫備註後執行。</p>
         
         <div class="calendar-container">
             <div class="calendar-header">
@@ -729,7 +754,7 @@
                     <button class="btn btn-sm" onclick="changeBatchMonth(1)">下個月 ▶</button>
                 </div>
                 <div>
-                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日</button>
+                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日 (自動略過假日)</button>
                     <button class="btn btn-sm" style="background-color:var(--muji-red); color:#fff;" onclick="selectWeekdays(false)">取消平日</button>
                 </div>
             </div>
@@ -746,7 +771,6 @@
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(false)">全不選</button>
                 </div>
             </div>
-            <!-- 批次預訂：橫向並列 4 欄位無卷軸 -->
             <div class="student-checkbox-list" id="batch-student-checkboxes"></div>
         </div>
 
@@ -785,6 +809,8 @@
 
         <div id="billing-detail-area" style="margin-top:20px; display:none; border:1px solid var(--border-color); padding:15px; background:#fff; margin-bottom:30px; border-radius: 4px;">
             <h3 id="billing-student-title">學生：</h3>
+            <div id="printed-bill-snapshot-info" style="display:none; background:#FFF8E7; border:1px solid #FFE0B2; padding:8px 12px; margin-bottom:12px; font-size:12px; border-radius:4px; color:#E65100;"></div>
+            
             <div class="billing-calculator">
                 <div class="calc-item">
                     <p style="color:var(--text-muted); font-size:12px;">A. 本月常規訂餐小計</p>
@@ -796,7 +822,7 @@
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="calc-last-month-detail">(上月已繳$0 - 應繳$0)</div>
                 </div>
                 <div class="calc-item">
-                    <p style="color:var(--success); font-size:12px; font-weight:bold;">C. 本月最終建議應繳 (A - B)</p>
+                    <p style="color:var(--success); font-size:12px; font-weight:bold;">C. 本月最新建議應繳 (A - B)</p>
                     <span id="calc-final-total" style="color:var(--muji-red); font-size:20px;">$0</span> 元
                 </div>
             </div>
@@ -875,7 +901,7 @@
             <div class="table-responsive">
                 <table style="background:#fff;" id="unpaid-students-table">
                     <thead>
-                        <tr><th>代碼/號碼</th><th>姓名</th><th>本月訂餐費用</th><th>建議應繳（含上月結轉）</th><th>快速切換</th></tr>
+                        <tr><th>代碼/號碼</th><th>姓名</th><th>本月訂餐費用</th><th>開單紀錄費用</th><th>最新建議應繳</th><th>快速切換</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -916,9 +942,12 @@
                         <select id="print-month-select" onchange="generatePrintBills()"></select>
                     </div>
                 </div>
-                <div style="text-align: left; width: 100%;">
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height: 1.4;">※ 提示：系統已建立精確分頁機制，每 10 人精準填滿一張 A4，第 11 人起自動跳至第二頁。</p>
-                    <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold;">直接啟動列印流程</button>
+                <div style="text-align: left; width: 100%; display:flex; flex-direction:column; gap:8px;">
+                    <p style="font-size:12px; color:var(--text-muted); line-height: 1.4;">※ 提示：系統已建立精確分頁機制，每 10 人精準填滿一張 A4，第 11 人起自動跳至第二頁。</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" onclick="savePrintBillSnapshot()" style="background-color: var(--success); font-weight: bold; flex: 1;">💾 儲存並鎖定本月開單紀錄 (做存檔紀錄)</button>
+                        <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold; flex: 1;">直接啟動列印流程</button>
+                    </div>
                 </div>
             </div>
             <div class="form-group" style="margin-top:10px;">
@@ -929,12 +958,53 @@
                         <button class="btn btn-sm" onclick="togglePrintAllStudents(false)">全不選</button>
                     </div>
                 </div>
-                <!-- 列印繳費單：橫向並列 4 欄位無卷軸 -->
                 <div class="student-checkbox-list" id="print-student-checkboxes" onchange="generatePrintBills()"></div>
             </div>
         </div>
 
         <div class="print-preview-container" id="bill-print-output-zone"></div>
+    </div>
+
+    <!-- 6. 系統設定分頁 -->
+    <div id="tab-settings" class="panel">
+        <h2>系統全域參數設定</h2>
+        
+        <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
+            <label><strong>🏫 全班統一班級設定</strong></label>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">此班級名稱將統一顯示於所有繳費單的學生姓名前方。</p>
+            <input type="text" id="setting-global-class" placeholder="例如: 六甲">
+            <button class="btn btn-sm" style="margin-top:8px;" onclick="saveGlobalClassSetting()">儲存班級設定</button>
+        </div>
+
+        <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
+            <label><strong>☁️ 雲端同步網址 (Google Apps Script Web App URL)</strong></label>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">請在此貼上您的雲端部署網址，系統會自動儲存。</p>
+            <input type="text" id="setting-cloud-url" placeholder="https://script.google.com/macros/s/.../exec">
+            <button class="btn btn-sm" style="margin-top:8px;" onclick="saveCloudUrlSetting()">儲存雲端網址</button>
+        </div>
+
+        <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
+            <label><strong>🏷️ 繳費單署名設定 (機構 / 教師名稱)</strong></label>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">此名稱將會顯示在每一張繳費單的左下角。</p>
+            <input type="text" id="setting-teacher-signature" placeholder="例如: 林老師">
+            <button class="btn btn-sm" style="margin-top:8px;" onclick="saveTeacherSignatureSetting()">儲存署名設定</button>
+        </div>
+
+        <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
+            <label><strong>🏖️ 國定假日 / 放假日設定 (批次全選平日時將自動略過)</strong></label>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">請新增不需要上課或訂餐的特定日期：</p>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="date" id="new-holiday-date" style="flex:1;">
+                <input type="text" id="new-holiday-desc" placeholder="假別說明 (例: 中秋節)" style="flex:2;">
+                <button class="btn" style="width:auto;" onclick="addHoliday()">＋ 新增假日</button>
+            </div>
+            <div class="table-responsive" style="background:#fff;">
+                <table id="holidays-table">
+                    <thead><tr><th>日期</th><th>假別說明</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -946,18 +1016,28 @@
         canceledPaid: {},
         dailyPrices: {},
         monthlyBilling: {}, 
+        printedSnapshots: {}, 
         postPaymentChanges: {},
-        config: { defaultPrice: 70 }
+        holidays: {}, 
+        config: { 
+            defaultPrice: 70,
+            cloudUrl: "",
+            teacherSignature: "林老師",
+            className: "六甲"
+        }
     };
 
     let batchSelectedDates = []; 
     let batchCurrentYear = new Date().getFullYear();
     let batchCurrentMonth = new Date().getMonth();
 
-    const CLOUD_SYNC_URL = "https://script.google.com/macros/s/AKfycbxgP7aV0yL9mGJ2YCI4e79ugHVeA7xUqah7lLu8pyJoyP220_8uEyztpIlU9ZOAj_Li/exec";
+    function getCloudUrl() {
+        return (db.config && db.config.cloudUrl) ? db.config.cloudUrl : "";
+    }
 
     function isCloudConfigured() {
-        return CLOUD_SYNC_URL && !CLOUD_SYNC_URL.includes("請貼上");
+        const url = getCloudUrl();
+        return url && !url.includes("請貼上");
     }
 
     function updateSyncStatus(text, isError) {
@@ -968,14 +1048,15 @@
     }
 
     async function uploadToCloud() {
+        const url = getCloudUrl();
         if (!isCloudConfigured()) {
-            alert('尚未設定雲端同步網址，請先按照說明部署 Google Apps Script 並貼上網址。');
+            alert('尚未在「系統設定」分頁中設定雲端同步網址！');
             return;
         }
         if (!confirm('確定要把目前畫面上的資料上傳，覆蓋雲端原本的備份嗎？')) return;
         try {
             updateSyncStatus('上傳中...');
-            const res = await fetch(CLOUD_SYNC_URL, {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'save', data: db })
@@ -993,22 +1074,23 @@
     }
 
     async function downloadFromCloud() {
+        const url = getCloudUrl();
         if (!isCloudConfigured()) {
-            alert('尚未設定雲端同步網址，請先按照說明部署 Google Apps Script 並貼上網址。');
+            alert('尚未在「系統設定」分頁中設定雲端同步網址！');
             return;
         }
         try {
             updateSyncStatus('讀取雲端備份中...');
-            const res = await fetch(CLOUD_SYNC_URL + '?action=load');
+            const res = await fetch(url + '?action=load');
             const result = await res.json();
             if (result.status === 'ok' && result.data) {
                 const cloudData = result.data;
                 const cloudTime = cloudData.updatedAt ? new Date(cloudData.updatedAt).toLocaleString('zh-TW') : '未知時間';
                 const localTime = db.updatedAt ? new Date(db.updatedAt).toLocaleString('zh-TW') : '未知時間';
 
-                let msg = `確定要用雲端備份覆蓋目前畫面上的資料嗎？\n\n雲端備份時間：${cloudTime}\n目前本機資料時間：${localTime}\n\n目前尚未上傳的異動將會遺失，如果不確定，建議先按「上傳雲端儲存」保留現在的版本。`;
+                let msg = `確定要用雲端備份覆蓋目前畫面上的資料嗎？\n\n雲端備份時間：${cloudTime}\n目前本機資料時間：${localTime}\n\n目前尚未上傳的異動將會遺失。`;
                 if ((db.updatedAt || 0) > (cloudData.updatedAt || 0)) {
-                    msg = '⚠️ 注意：目前畫面上的資料看起來比雲端備份還新，代表可能有還沒上傳的異動！\n\n' + msg;
+                    msg = '⚠️ 注意：目前畫面上的資料看起來比雲端備份還新！\n\n' + msg;
                 }
                 if (!confirm(msg)) { updateSyncStatus('已取消載入'); return; }
 
@@ -1016,14 +1098,20 @@
                 if(!db.canceledPaid) db.canceledPaid = {};
                 if(!db.dailyPrices) db.dailyPrices = {};
                 if(!db.monthlyBilling) db.monthlyBilling = {};
+                if(!db.printedSnapshots) db.printedSnapshots = {};
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
-                if(!db.config) db.config = { defaultPrice: 70 };
+                if(!db.holidays) db.holidays = {};
+                if(!db.config) db.config = { defaultPrice: 70, cloudUrl: url, teacherSignature: "萊諾 曹老師", className: "六甲" };
+                if(!db.config.cloudUrl) db.config.cloudUrl = url;
+                if(!db.config.teacherSignature) db.config.teacherSignature = "萊諾 曹老師";
+                if(!db.config.className) db.config.className = "六甲";
+
                 localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
                 refreshAllUI();
                 togglePrintAllStudents(true);
                 updateSyncStatus('已載入雲端備份 ✓ (' + new Date().toLocaleTimeString('zh-TW') + ')');
             } else if (result.status === 'empty') {
-                alert('雲端目前還沒有任何備份資料，請先按「上傳雲端儲存」。');
+                alert('雲端目前還沒有任何備份資料。');
                 updateSyncStatus('雲端目前沒有備份資料', true);
             } else {
                 updateSyncStatus('讀取失敗：' + (result.message || '未知錯誤'), true);
@@ -1131,9 +1219,13 @@
                 if(!db.canceledPaid) db.canceledPaid = {};
                 if(!db.dailyPrices) db.dailyPrices = {};
                 if(!db.monthlyBilling) db.monthlyBilling = {};
+                if(!db.printedSnapshots) db.printedSnapshots = {};
                 if(!db.postPaymentChanges) db.postPaymentChanges = {};
-                if(!db.config) db.config = { defaultPrice: 70 };
-                else db.config.defaultPrice = 70;
+                if(!db.holidays) db.holidays = {};
+                if(!db.config) db.config = { defaultPrice: 70, cloudUrl: "", teacherSignature: "萊諾 曹老師", className: "六甲" };
+                if(!db.config.defaultPrice) db.config.defaultPrice = 70;
+                if(!db.config.teacherSignature) db.config.teacherSignature = "萊諾 曹老師";
+                if(!db.config.className) db.config.className = "六甲";
                 
                 Object.values(db.students).forEach(s => {
                     if (!s.fixedDays) s.fixedDays = [];
@@ -1148,18 +1240,25 @@
             };
             db.orders = {};
             db.monthlyBilling = {};
+            db.printedSnapshots = {};
             db.postPaymentChanges = {};
+            db.holidays = {};
+            db.config = { defaultPrice: 70, cloudUrl: "", teacherSignature: "萊諾 曹老師", className: "六甲" };
         }
 
         document.getElementById('overview-date').value = getTodayStr();
+        document.getElementById('setting-global-class').value = db.config.className || "";
+        document.getElementById('setting-cloud-url').value = db.config.cloudUrl || "";
+        document.getElementById('setting-teacher-signature').value = db.config.teacherSignature || "萊諾 曹老師";
+
         if (usedDemoData) saveToLocalStorage();
         refreshAllUI();
         togglePrintAllStudents(true);
 
         if (isCloudConfigured()) {
-            updateSyncStatus('已設定雲端同步，請視需要按「上傳雲端儲存」或「載入雲端備份」');
+            updateSyncStatus('已設定雲端同步，請視需要按〈上傳雲端儲存〉或〈載入雲端備份〉');
         } else {
-            updateSyncStatus('尚未設定雲端同步網址，目前僅使用本機資料');
+            updateSyncStatus('請至〈系統設定〉分頁設定雲端同步網址');
         }
     }
 
@@ -1175,7 +1274,7 @@
                 [JSON.stringify({ action: 'save', data: db })],
                 { type: 'text/plain;charset=utf-8' }
             );
-            navigator.sendBeacon(CLOUD_SYNC_URL, blob);
+            navigator.sendBeacon(getCloudUrl(), blob);
         } catch (e) {
             console.error(e);
         }
@@ -1196,6 +1295,7 @@
         renderBatchStudentCheckboxes();
         renderPrintStudentCheckboxes();
         generatePrintBills();
+        renderHolidaysTable();
     }
 
     function switchTab(tabId) {
@@ -1284,31 +1384,20 @@
         getSortedStudents().forEach(student => {
             const orderInfo = dayOrders[student.id];
             const isOrdered = orderInfo && orderInfo.ordered === true;
-            const isCanceledPaid = db.canceledPaid[student.id] && db.canceledPaid[student.id].includes(dateStr);
             
-            if (!isOrdered && !isCanceledPaid) return;
+            if (!isOrdered) return;
 
             visibleCount++;
-            let statusHTML = '';
+            orderCount++;
             const orderNote = (orderInfo && orderInfo.note) ? orderInfo.note : "";
-            
-            if (isCanceledPaid) {
-                statusHTML = '<span class="status-badge status-canceled-paid">已付費取消</span>';
-            } else if (isOrdered) {
-                statusHTML = '<span class="status-badge status-ordered">已預訂</span>';
-                orderCount++;
-            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${student.id}</td><td>${student.name}</td><td>${statusHTML}</td>
+                <td>${student.id}</td>
+                <td>${student.name}</td>
+                <td><span class="status-badge status-ordered">已預訂</span></td>
                 <td style="color:var(--text-muted); font-size:13px;">${orderNote}</td>
-                <td>
-                    ${isOrdered ? 
-                        `<button class="btn btn-danger btn-sm" onclick="toggleOrder('${dateStr}', '${student.id}', false)">取消</button>` : 
-                        `<button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="toggleOrder('${dateStr}', '${student.id}', true)">個別預訂</button>`
-                    }
-                </td>
+                <td><button class="btn btn-danger btn-sm" onclick="toggleOrder('${dateStr}', '${student.id}', false)">取消</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -1401,7 +1490,6 @@
         const tbody = document.querySelector('#student-table tbody');
         tbody.innerHTML = '';
         const keyword = document.getElementById('search-student-input').value.trim().toLowerCase();
-        
         const dayNames = { 1: '週一', 2: '週二', 3: '週三', 4: '週四', 5: '週五' };
 
         getSortedStudents().forEach(student => {
@@ -1514,12 +1602,21 @@
         const totalDays = new Date(batchCurrentYear, batchCurrentMonth + 1, 0).getDate();
         for (let i = 0; i < firstDayIndex; i++) { const emptyDiv = document.createElement('div'); emptyDiv.className = 'calendar-day empty'; grid.appendChild(emptyDiv); }
         for (let day = 1; day <= totalDays; day++) {
-            const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.innerText = day;
+            const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; 
             const mStr = String(batchCurrentMonth + 1).padStart(2, '0');
             const dStr = String(day).padStart(2, '0');
             const dateKeyStr = `${batchCurrentYear}-${mStr}-${dStr}`;
             
+            let holidayBadge = "";
+            if (db.holidays && db.holidays[dateKeyStr]) {
+                dayDiv.style.backgroundColor = "#FDF2F2";
+                dayDiv.style.borderColor = "var(--muji-red)";
+                holidayBadge = `<br><span style="font-size:8px; color:var(--muji-red);">${db.holidays[dateKeyStr]}</span>`;
+            }
+
+            dayDiv.innerHTML = `${day}${holidayBadge}`;
             if (batchSelectedDates.includes(dateKeyStr)) dayDiv.classList.add('selected');
+
             dayDiv.onclick = () => {
                 if (batchSelectedDates.includes(dateKeyStr)) {
                     batchSelectedDates = batchSelectedDates.filter(d => d !== dateKeyStr); dayDiv.classList.remove('selected');
@@ -1543,8 +1640,12 @@
                 const dStr = String(day).padStart(2, '0');
                 const dateKeyStr = `${batchCurrentYear}-${mStr}-${dStr}`;
                 
+                const isHoliday = db.holidays && db.holidays[dateKeyStr];
+
                 if (shouldSelect) {
-                    if (!batchSelectedDates.includes(dateKeyStr)) batchSelectedDates.push(dateKeyStr);
+                    if (!isHoliday && !batchSelectedDates.includes(dateKeyStr)) {
+                        batchSelectedDates.push(dateKeyStr);
+                    }
                 } else {
                     batchSelectedDates = batchSelectedDates.filter(d => d !== dateKeyStr);
                 }
@@ -1567,23 +1668,24 @@
         const dayNamesShort = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五' };
 
         getSortedStudents().forEach(s => {
-            let daysText = '';
+            let badgesHTML = '';
             if (s.fixedDays && s.fixedDays.length > 0) {
                 const sortedDays = [...s.fixedDays].sort((a,b) => a - b);
-                daysText = `（週${sortedDays.map(d => dayNamesShort[d]).join('、')}）`;
+                badgesHTML = `<span class="weekday-badges">` + 
+                    sortedDays.map(d => `<span class="weekday-badge">${dayNamesShort[d]}</span>`).join('') + 
+                    `</span>`;
             } else {
-                daysText = '（無）';
+                badgesHTML = `<span class="weekday-badge none">無</span>`;
             }
 
             container.innerHTML += `
                 <label class="student-item">
                     <input type="checkbox" name="batch-student-cb" value="${s.id}">
-                    <span>${s.name} (${s.id}) <span class="student-tag-muted">${daysText}</span></span>
+                    <span>${s.name} (${s.id})${badgesHTML}</span>
                 </label>`;
         });
     }
 
-    // ⚡ 完全符合條件的一鍵自動勾選
     function applyFixedWeeklySelection() {
         if (batchSelectedDates.length === 0) {
             alert('請先在上方月曆點選至少一個日期！');
@@ -1620,7 +1722,7 @@
             if (isExactMatch) matchedCount++;
         });
 
-        alert(`已完成比對！已為您自動勾選固定標籤「完全符合」所選星期的學生（共 ${matchedCount} 位）。`);
+        alert(`已完成比對！（共 ${matchedCount} 位）。`);
     }
 
     function toggleSelectAllStudents(isSelected) {
@@ -1739,6 +1841,15 @@
         const student = db.students[id];
         document.getElementById('billing-student-title').innerText = `學生：${student.name} (${student.id}) ｜ ${targetMonth} 月份帳務結算`;
         
+        const snapshotBox = document.getElementById('printed-bill-snapshot-info');
+        if (db.printedSnapshots && db.printedSnapshots[targetMonth] && db.printedSnapshots[targetMonth][id]) {
+            const snap = db.printedSnapshots[targetMonth][id];
+            snapshotBox.style.display = 'block';
+            snapshotBox.innerHTML = `📄 <strong>初始印單開單紀錄：</strong> 當初印給家長應繳 <strong>$${snap.finalTotal}</strong> (餐費$${snap.normalCost}${snap.balance !== 0 ? '，結轉' + snap.balance : ''}) ｜ 存檔時間：${snap.timestamp}`;
+        } else {
+            snapshotBox.style.display = 'none';
+        }
+
         let normalDaysCount = 0; let normalCostSum = 0;
         Object.keys(db.orders).forEach(dateStr => {
             if (dateStr.startsWith(targetMonth)) {
@@ -1939,12 +2050,19 @@
             const balance = getLastMonthBalance(s.id, targetMonth);
             const suggestedTotal = monthCost - balance;
 
+            let printedInfo = "-";
+            if (db.printedSnapshots && db.printedSnapshots[targetMonth] && db.printedSnapshots[targetMonth][s.id]) {
+                const snap = db.printedSnapshots[targetMonth][s.id];
+                printedInfo = `<span style="color:#E65100; font-weight:bold;">$${snap.finalTotal}</span>`;
+            }
+
             hasData = true;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${s.id}</strong></td>
                 <td>${s.name}</td>
                 <td>$${monthCost}</td>
+                <td>${printedInfo}</td>
                 <td style="color:var(--muji-red); font-weight:bold;">$${suggestedTotal}</td>
                 <td><button class="btn btn-sm" onclick="linkToStudentBilling('${s.id}', '${targetMonth}')">快速切換</button></td>
             `;
@@ -1952,7 +2070,7 @@
         });
 
         if (!hasData) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success);">本月份目前沒有未繳費的學生 🎉</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--success);">本月份目前沒有未繳費的學生 🎉</td></tr>';
         }
     }
 
@@ -2014,11 +2132,23 @@
     }
 
     function deleteStudent(id) {
-        if (confirm('確定刪除該學生？')) {
+        if (confirm('確定刪除該學生？刪除後相關歷史訂餐與帳務將會洗淨，使首頁總收支保持精準。')) {
             delete db.students[id]; 
             if(db.canceledPaid[id]) delete db.canceledPaid[id]; 
             if(db.postPaymentChanges && db.postPaymentChanges[id]) delete db.postPaymentChanges[id];
-            Object.keys(db.monthlyBilling).forEach(m => { if(db.monthlyBilling[m][id]) delete db.monthlyBilling[m][id]; });
+            
+            Object.keys(db.orders).forEach(d => {
+                if(db.orders[d] && db.orders[d][id]) delete db.orders[d][id];
+            });
+
+            Object.keys(db.monthlyBilling).forEach(m => { 
+                if(db.monthlyBilling[m] && db.monthlyBilling[m][id]) delete db.monthlyBilling[m][id]; 
+            });
+
+            Object.keys(db.printedSnapshots).forEach(m => { 
+                if(db.printedSnapshots[m] && db.printedSnapshots[m][id]) delete db.printedSnapshots[m][id]; 
+            });
+
             saveToLocalStorage(); refreshAllUI();
         }
     }
@@ -2039,6 +2169,49 @@
         generatePrintBills();
     }
 
+    function savePrintBillSnapshot() {
+        const targetMonth = getSelectedPrintMonthStr();
+        const checkboxes = document.querySelectorAll('input[name="print-student-cb"]:checked');
+        const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+        if (!targetMonth || selectedIds.length === 0) {
+            alert('請先選擇月份並勾選學生！');
+            return;
+        }
+
+        if (!db.printedSnapshots) db.printedSnapshots = {};
+        if (!db.printedSnapshots[targetMonth]) db.printedSnapshots[targetMonth] = {};
+
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        selectedIds.forEach(id => {
+            let count70 = 0; let count75 = 0;
+            Object.keys(db.orders).forEach(dateStr => {
+                if (dateStr.startsWith(targetMonth)) {
+                    if (db.orders[dateStr][id] && db.orders[dateStr][id].ordered) {
+                        if (getPriceForDate(dateStr) === 75) count75++; else count70++;
+                    }
+                }
+            });
+            const normalCost = (count70 * 70) + (count75 * 75);
+            const balance = getLastMonthBalance(id, targetMonth); 
+            const finalTotal = normalCost - balance;
+
+            db.printedSnapshots[targetMonth][id] = {
+                finalTotal: finalTotal,
+                normalCost: normalCost,
+                balance: balance,
+                timestamp: timeStr
+            };
+        });
+
+        saveToLocalStorage();
+        refreshAllUI();
+        alert(`已成功為 ${targetMonth} 月份的 ${selectedIds.length} 位學生儲存開單歷史紀錄！`);
+    }
+
+    // 產生繳費單：學生姓名前方顯示全班統一設定的班級
     function generatePrintBills() {
         const targetMonth = getSelectedPrintMonthStr();
         const outputZone = document.getElementById('bill-print-output-zone');
@@ -2054,6 +2227,8 @@
         const parts = targetMonth.split('-');
         const year = parseInt(parts[0]);
         const monthIndex = parseInt(parts[1]) - 1;
+        const teacherSig = (db.config && db.config.teacherSignature) ? db.config.teacherSignature : "萊諾 曹老師";
+        const globalClass = (db.config && db.config.className) ? db.config.className.trim() : "";
 
         let currentPageDiv = null;
 
@@ -2091,6 +2266,7 @@
             const balance = getLastMonthBalance(id, targetMonth); 
             const finalTotal = normalCost - balance;
             const showMonth = parts[1].replace(/^0/, '');
+            const classAndName = globalClass ? `${globalClass} ${student.name}` : student.name;
 
             const billCard = document.createElement('div');
             billCard.className = 'bill-card';
@@ -2104,14 +2280,14 @@
 
             leftDiv.innerHTML = `
                 <div>
-                    <div class="bill-student-name">${student.name}</div>
+                    <div class="bill-student-name">${classAndName}</div>
                     <div class="bill-title">${showMonth} 月餐費單</div>
                     <div class="bill-price-row"><span>70 元</span><span>${count70} 天</span></div>
                     <div class="bill-price-row"><span>75 元</span><span>${count75} 天</span></div>
                     <div class="bill-price-row" style="color:#555; margin-top:2px; font-size:9.5px;"><span>上月結餘</span><span>${balanceText}</span></div>
                 </div>
                 <div class="bill-total-row" style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span style="font-size: 9px; font-weight: normal; color: #000; text-align: left;">萊諾 曹老師</span>
+                    <span style="font-size: 9px; font-weight: normal; color: #000; text-align: left;">${teacherSig}</span>
                     <span>應繳 ${finalTotal} 元</span>
                 </div>
             `;
@@ -2184,9 +2360,88 @@
         });
     }
 
+    // 設定分頁功能
+    function saveGlobalClassSetting() {
+        const className = document.getElementById('setting-global-class').value.trim();
+        if (!db.config) db.config = {};
+        db.config.className = className;
+        saveToLocalStorage();
+        alert('全班統一班級設定已儲存！');
+        generatePrintBills();
+    }
+
+    function saveCloudUrlSetting() {
+        const url = document.getElementById('setting-cloud-url').value.trim();
+        if (!db.config) db.config = {};
+        db.config.cloudUrl = url;
+        saveToLocalStorage();
+        alert('雲端同步網址已儲存！');
+        if (isCloudConfigured()) updateSyncStatus('已設定雲端同步網址');
+    }
+
+    function saveTeacherSignatureSetting() {
+        const sig = document.getElementById('setting-teacher-signature').value.trim();
+        if (!db.config) db.config = {};
+        db.config.teacherSignature = sig || "林老師";
+        saveToLocalStorage();
+        alert('繳費單署名設定已更新！');
+        generatePrintBills();
+    }
+
+    function addHoliday() {
+        const dVal = document.getElementById('new-holiday-date').value;
+        const descVal = document.getElementById('new-holiday-desc').value.trim() || "國定假日";
+        if (!dVal) { alert('請選擇假日日期'); return; }
+        
+        if (!db.holidays) db.holidays = {};
+        db.holidays[dVal] = descVal;
+        document.getElementById('new-holiday-date').value = '';
+        document.getElementById('new-holiday-desc').value = '';
+        saveToLocalStorage();
+        renderHolidaysTable();
+        renderBatchCalendar();
+        alert('已成功新增假日設定！');
+    }
+
+    function deleteHoliday(dateStr) {
+        if (!db.holidays) return;
+        delete db.holidays[dateStr];
+        saveToLocalStorage();
+        renderHolidaysTable();
+        renderBatchCalendar();
+    }
+
+    function renderHolidaysTable() {
+        const tbody = document.querySelector('#holidays-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const holidays = db.holidays || {};
+        const sortedDates = Object.keys(holidays).sort();
+
+        if (sortedDates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">目前尚未設定任何國定假日</td></tr>';
+            return;
+        }
+
+        sortedDates.forEach(dateStr => {
+            const desc = holidays[dateStr];
+            tbody.innerHTML += `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td>${desc}</td>
+                    <td><button class="btn btn-sm" style="color:var(--muji-red); border-color:var(--muji-red);" onclick="deleteHoliday('${dateStr}')">刪除</button></td>
+                </tr>
+            `;
+        });
+    }
+
     function clearAllData() {
-        if (!confirm('確定要清空所有資料嗎？\n\n這會刪除所有學生名單、訂餐紀錄與帳務資料，且無法復原！\n\n建議先按〈匯出備份 (JSON)〉保留一份存檔。')) return;
+        if (!confirm('確定要清空所有資料嗎？\n\n這會刪除所有學生名單、訂餐紀錄與帳務資料，且無法復原！')) return;
         if (!confirm('請再次確認：真的要清空全部資料，開始新學期嗎？')) return;
+
+        const currentCloudUrl = db.config ? db.config.cloudUrl : "";
+        const currentClass = db.config ? db.config.className : "";
+        const currentSig = db.config ? db.config.teacherSignature : "萊諾 曹老師";
 
         db = {
             students: {},
@@ -2194,8 +2449,10 @@
             canceledPaid: {},
             dailyPrices: {},
             monthlyBilling: {},
+            printedSnapshots: {},
             postPaymentChanges: {},
-            config: { defaultPrice: 70 }
+            holidays: {},
+            config: { defaultPrice: 70, cloudUrl: currentCloudUrl, teacherSignature: currentSig, className: currentClass }
         };
 
         saveToLocalStorage();
