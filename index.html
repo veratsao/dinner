@@ -645,11 +645,11 @@
     <header>
         <h1>晚餐預訂系統 <span style="font-size:14px; color:var(--text-muted);">MUJI SIMPLICITY v10</span></h1>
         <div class="backup-btns">
-            <button onclick="exportData()">匯出(JSON)</button>
-            <button onclick="document.getElementById('importFile').click()">匯入</button>
+            <button onclick="exportData()">匯出備份 (JSON)</button>
+            <button onclick="document.getElementById('importFile').click()">匯入備份</button>
             <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-            <button onclick="uploadToCloud()" style="border-color:var(--success); color:var(--success);">☁️ 上傳雲端</button>
-            <button onclick="downloadFromCloud()" style="border-color:var(--text-main);">☁️ 載入雲端</button>
+            <button onclick="uploadToCloud()" style="border-color:var(--success); color:var(--success);">☁️ 上傳雲端儲存</button>
+            <button onclick="downloadFromCloud()" style="border-color:var(--text-main);">☁️ 載入雲端備份</button>
             <button onclick="clearAllData()" style="border-color:var(--muji-red); color:var(--muji-red);">清空所有資料（新學期）</button>
             <button id="view-mode-btn" onclick="toggleViewMode()">切換手機/電腦版</button>
         </div>
@@ -689,7 +689,7 @@
             <div class="card"><div class="title">目前收支（現存所有已收總額 − 截至今日應扣總餐費）</div><div class="value" id="sum-cashflow">$0</div></div>
         </div>
 
-        <h3 style="color:var(--success)">當日訂餐名單</h3>
+        <h3 style="color:var(--success)">當日訂餐名單 (僅顯示實際訂餐學生)</h3>
         <div class="table-responsive">
             <table id="daily-table">
                 <thead>
@@ -702,7 +702,7 @@
 
     <!-- 2. 學生管理 -->
     <div id="tab-students" class="panel">
-        <h2>學生名單與標籤管理</h2>
+        <h2>學生名單與固定每週點餐標籤管理</h2>
         <div class="flex-row" style="background: var(--hover-bg); padding: 15px; border: 1px solid var(--border-color); border-radius:4px;">
             <div style="flex:1;">
                 <label>個別新增：學生姓名</label>
@@ -744,7 +744,7 @@
     <!-- 3. 批次預訂功能 -->
     <div id="tab-batch" class="panel">
         <h2>批次月曆預訂 / 取消</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期，勾選學生，填寫備註（選填）後執行。</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日，系統將自動略過設定中的國定假日），勾選學生，填寫備註後執行。</p>
         
         <div class="calendar-container">
             <div class="calendar-header">
@@ -754,7 +754,7 @@
                     <button class="btn btn-sm" onclick="changeBatchMonth(1)">下個月 ▶</button>
                 </div>
                 <div>
-                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日</button>
+                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="selectWeekdays(true)">全選平日 (自動略過假日)</button>
                     <button class="btn btn-sm" style="background-color:var(--muji-red); color:#fff;" onclick="selectWeekdays(false)">取消平日</button>
                 </div>
             </div>
@@ -766,7 +766,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap: wrap; gap: 8px;">
                 <label style="margin-bottom:0;"><strong>選擇訂餐學生</strong></label>
                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="applyFixedWeeklySelection()">⚡ 一鍵勾選</button>
+                    <button class="btn btn-sm" style="background-color:var(--success); color:#fff;" onclick="applyFixedWeeklySelection()">⚡ 一鍵勾選（完全符合所選星期）</button>
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(true)">全選</button>
                     <button class="btn btn-sm" onclick="toggleSelectAllStudents(false)">全不選</button>
                 </div>
@@ -775,7 +775,7 @@
         </div>
 
         <div class="form-group" style="margin-top:15px;">
-            <label><strong>批次預訂/取消 備註說明</strong></label>
+            <label><strong>批次預訂/取消 備註說明 (此備註將帶入繳費單)</strong></label>
             <input type="text" id="batch-action-note" placeholder="如：排骨飯、不要辣...（選填）">
         </div>
 
@@ -788,10 +788,10 @@
 
     <!-- 4. 繳費與跨月核銷頁面 -->
     <div id="tab-billing" class="panel">
-        <h2>學生繳費與核銷管理</h2>
+        <h2>學生繳費與跨月核銷管理</h2>
         <div class="search-box" style="background: var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius: 4px; display: flex; flex-direction: column; gap: 12px;">
             <div>
-                <label><strong>1. 選擇學生</strong></label>
+                <label><strong>1. 選擇查核學生</strong></label>
                 <div id="billing-student-buttons" class="choice-btn-grid"></div>
                 <select id="billing-student-select" onchange="renderStudentBilling()" style="display:none;"></select>
             </div>
@@ -813,7 +813,7 @@
             
             <div class="billing-calculator">
                 <div class="calc-item">
-                    <p style="color:var(--text-muted); font-size:12px;">A. 本月訂餐小計</p>
+                    <p style="color:var(--text-muted); font-size:12px;">A. 本月常規訂餐小計</p>
                     <span id="calc-current-month-cost">$0</span> (共 <span id="calc-current-days" style="font-size:14px;">0</span> 天)
                 </div>
                 <div class="calc-item">
@@ -943,10 +943,10 @@
                     </div>
                 </div>
                 <div style="text-align: left; width: 100%; display:flex; flex-direction:column; gap:8px;">
-                    <p style="font-size:12px; color:var(--text-muted); line-height: 1.4;">※ 提示：每 10 人一張，第 11 人起自動跳至第二頁。</p>
+                    <p style="font-size:12px; color:var(--text-muted); line-height: 1.4;">※ 提示：系統已建立精確分頁機制，每 10 人精準填滿一張 A4，第 11 人起自動跳至第二頁。</p>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn" onclick="savePrintBillSnapshot()" style="background-color: var(--success); font-weight: bold; flex: 1;">💾 儲存開單紀錄</button>
-                        <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold; flex: 1;">🖨️列印</button>
+                        <button class="btn" onclick="savePrintBillSnapshot()" style="background-color: var(--success); font-weight: bold; flex: 1;">💾 儲存並鎖定本月開單紀錄 (做存檔紀錄)</button>
+                        <button class="btn" onclick="window.print()" style="background-color: var(--muji-red); font-weight: bold; flex: 1;">直接啟動列印流程</button>
                     </div>
                 </div>
             </div>
@@ -970,7 +970,7 @@
         <h2>系統全域參數設定</h2>
         
         <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
-            <label><strong>🏫 班級設定</strong></label>
+            <label><strong>🏫 全班統一班級設定</strong></label>
             <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">此班級名稱將統一顯示於所有繳費單的學生姓名前方。</p>
             <input type="text" id="setting-global-class" placeholder="例如: 六甲">
             <button class="btn btn-sm" style="margin-top:8px;" onclick="saveGlobalClassSetting()">儲存班級設定</button>
@@ -1047,13 +1047,25 @@
         el.style.color = isError ? 'var(--muji-red)' : 'var(--text-muted)';
     }
 
+    function syncConfigFromUI() {
+        if (!db.config) db.config = {};
+        const classEl = document.getElementById('setting-global-class');
+        const urlEl = document.getElementById('setting-cloud-url');
+        const sigEl = document.getElementById('setting-teacher-signature');
+
+        if (classEl) db.config.className = classEl.value.trim();
+        if (urlEl) db.config.cloudUrl = urlEl.value.trim();
+        if (sigEl) db.config.teacherSignature = sigEl.value.trim() || "陽光 王老師";
+    }
+
     async function uploadToCloud() {
+        syncConfigFromUI(); // 自動同步系統設定輸入框至資料庫物件
         const url = getCloudUrl();
         if (!isCloudConfigured()) {
             alert('尚未在「系統設定」分頁中設定雲端同步網址！');
             return;
         }
-        if (!confirm('確定要把目前畫面上的資料上傳，覆蓋雲端原本的備份嗎？')) return;
+        if (!confirm('確定要把目前畫面上的資料（包含學生名單、訂餐、帳務與系統設定）上傳，覆蓋雲端原本的備份嗎？')) return;
         try {
             updateSyncStatus('上傳中...');
             const res = await fetch(url, {
@@ -1105,6 +1117,11 @@
                 if(!db.config.cloudUrl) db.config.cloudUrl = url;
                 if(!db.config.teacherSignature) db.config.teacherSignature = "陽光 王老師";
                 if(!db.config.className) db.config.className = "六甲";
+
+                // 將載入的設定同步回畫面輸入框
+                document.getElementById('setting-global-class').value = db.config.className || "";
+                document.getElementById('setting-cloud-url').value = db.config.cloudUrl || "";
+                document.getElementById('setting-teacher-signature').value = db.config.teacherSignature || "陽光 王老師";
 
                 localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
                 refreshAllUI();
@@ -1263,6 +1280,7 @@
     }
 
     function saveToLocalStorage() {
+        syncConfigFromUI();
         db.updatedAt = Date.now();
         localStorage.setItem('muji_dinner_db_v10', JSON.stringify(db));
     }
@@ -1270,6 +1288,7 @@
     function flushPendingSync() {
         if (!isCloudConfigured()) return;
         try {
+            syncConfigFromUI();
             const blob = new Blob(
                 [JSON.stringify({ action: 'save', data: db })],
                 { type: 'text/plain;charset=utf-8' }
@@ -1847,7 +1866,7 @@
         if (db.printedSnapshots && db.printedSnapshots[targetMonth] && db.printedSnapshots[targetMonth][id]) {
             const snap = db.printedSnapshots[targetMonth][id];
             snapshotBox.style.display = 'block';
-            snapshotBox.innerHTML = `📄 <strong>開單紀錄：</strong> 應繳 <strong>$${snap.finalTotal}</strong> (餐費$${snap.normalCost}${snap.balance !== 0 ? '，結轉' + snap.balance : ''}) ｜ 存檔時間：${snap.timestamp}`;
+            snapshotBox.innerHTML = `📄 <strong>初始印單開單紀錄：</strong> 當初印給家長應繳 <strong>$${snap.finalTotal}</strong> (餐費$${snap.normalCost}${snap.balance !== 0 ? '，結轉' + snap.balance : ''}) ｜ 存檔時間：${snap.timestamp}`;
         } else {
             snapshotBox.style.display = 'none';
         }
@@ -2216,7 +2235,6 @@
         alert(`已成功為 ${targetMonth} 月份的 ${selectedIds.length} 位學生儲存開單歷史紀錄！`);
     }
 
-    // 產生繳費單：嚴格依循「必須先存檔鎖定，後續異動才會顯示」
     function generatePrintBills() {
         const targetMonth = getSelectedPrintMonthStr();
         const outputZone = document.getElementById('bill-print-output-zone');
@@ -2336,7 +2354,6 @@
             }
             calGridHTML += '</div>';
 
-            // 檢查上月異動：必須具備上月存檔紀錄 (lastSnap)，且異動發生在存檔之後
             let addedParts = [];
             let canceledParts = [];
             let lastSnap = lastMonthSnapshotMap[id];
@@ -2392,31 +2409,24 @@
         });
     }
 
-    // 設定分頁功能
     function saveGlobalClassSetting() {
-        const className = document.getElementById('setting-global-class').value.trim();
-        if (!db.config) db.config = {};
-        db.config.className = className;
+        syncConfigFromUI();
         saveToLocalStorage();
-        alert('全班統一班級設定已儲存！');
+        alert('全班統一班級設定已儲存並同步！');
         generatePrintBills();
     }
 
     function saveCloudUrlSetting() {
-        const url = document.getElementById('setting-cloud-url').value.trim();
-        if (!db.config) db.config = {};
-        db.config.cloudUrl = url;
+        syncConfigFromUI();
         saveToLocalStorage();
-        alert('雲端同步網址已儲存！');
+        alert('雲端同步網址已儲存並同步！');
         if (isCloudConfigured()) updateSyncStatus('已設定雲端同步網址');
     }
 
     function saveTeacherSignatureSetting() {
-        const sig = document.getElementById('setting-teacher-signature').value.trim();
-        if (!db.config) db.config = {};
-        db.config.teacherSignature = sig || "陽光 王老師";
+        syncConfigFromUI();
         saveToLocalStorage();
-        alert('繳費單署名設定已更新！');
+        alert('繳費單署名設定已更新並同步！');
         generatePrintBills();
     }
 
@@ -2509,6 +2519,7 @@
     }
 
     function exportData() {
+        syncConfigFromUI();
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr); downloadAnchor.setAttribute("download", `dinner_backups_v10.json`);
@@ -2520,7 +2531,14 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                db = JSON.parse(e.target.result); saveToLocalStorage(); refreshAllUI(); alert('匯入成功');
+                db = JSON.parse(e.target.result); 
+                if(!db.config) db.config = { defaultPrice: 70, cloudUrl: "", teacherSignature: "陽光 王老師", className: "六甲" };
+                document.getElementById('setting-global-class').value = db.config.className || "";
+                document.getElementById('setting-cloud-url').value = db.config.cloudUrl || "";
+                document.getElementById('setting-teacher-signature').value = db.config.teacherSignature || "陽光 王老師";
+                saveToLocalStorage(); 
+                refreshAllUI(); 
+                alert('匯入成功');
             } catch (err) { alert('檔案錯誤'); }
         };
         reader.readAsText(file);
