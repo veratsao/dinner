@@ -367,7 +367,6 @@
         .calendar-day.selected { background-color: var(--muji-red); color: #fff; border-color: var(--muji-red); }
         .calendar-day.empty { background: transparent; border: none; cursor: default; }
 
-        /* 學生選單：4欄並列，無卷軸 */
         .student-checkbox-list {
             border: 1px solid var(--border-color);
             padding: 12px;
@@ -992,7 +991,18 @@
 
         <div class="form-group" style="background:var(--hover-bg); padding:15px; border:1px solid var(--border-color); border-radius:4px; margin-bottom:20px;">
             <label><strong>🏖️ 國定假日 / 放假日設定 (批次全選平日時將自動略過)</strong></label>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">請新增不需要上課或訂餐的特定日期：</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+                您可以手動新增假日，或直接上傳行政院人事行政總處的行事曆檔案（支援政府開放資料的 CSV 格式，例如從政府資料開放平臺下載的「中華民國政府行政機關辦公日曆表」CSV 檔）。
+            </p>
+            
+            <div style="background:#fff; border:1px dashed var(--text-muted); padding:12px; border-radius:4px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+                <label style="margin-bottom:0; font-weight:bold; color:var(--success);">📥 批次匯入行政院行事曆 (.csv 檔)</label>
+                <div style="font-size:11px; color:var(--text-muted);">
+                    提示：政府行政機關辦公日曆表通常為 CSV 格式（欄位包含：西元日期、是否放假、備註等）。您也可以將行政院的 .ods 另存成 .csv 後直接上傳，系統會自動將所有「放假之紀念日或節日 / 調整放假 / 週末補假」自動轉入假日清單！
+                </div>
+                <input type="file" id="importCalendarFile" accept=".csv" style="font-size:13px;" onchange="importGovernmentCalendar(event)">
+            </div>
+
             <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <input type="date" id="new-holiday-date" style="flex:1;">
                 <input type="text" id="new-holiday-desc" placeholder="假別說明 (例: 中秋節)" style="flex:2;">
@@ -1059,7 +1069,7 @@
     }
 
     async function uploadToCloud() {
-        syncConfigFromUI(); // 自動同步系統設定輸入框至資料庫物件
+        syncConfigFromUI();
         const url = getCloudUrl();
         if (!isCloudConfigured()) {
             alert('尚未在「系統設定」分頁中設定雲端同步網址！');
@@ -1118,7 +1128,6 @@
                 if(!db.config.teacherSignature) db.config.teacherSignature = "陽光 王老師";
                 if(!db.config.className) db.config.className = "六甲";
 
-                // 將載入的設定同步回畫面輸入框
                 document.getElementById('setting-global-class').value = db.config.className || "";
                 document.getElementById('setting-cloud-url').value = db.config.cloudUrl || "";
                 document.getElementById('setting-teacher-signature').value = db.config.teacherSignature || "陽光 王老師";
@@ -2490,6 +2499,69 @@
                 </tr>
             `;
         });
+    }
+
+    // 匯入行政院政府行政機關辦公日曆表 CSV 檔案
+    function importGovernmentCalendar(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                let importedCount = 0;
+
+                if (!db.holidays) db.holidays = {};
+
+                // 略過標題列，逐行解析 CSV
+                // 行政院公務日曆表 CSV 格式通常為：西元日期(YYYYMMDD或YYYY/MM/DD),是否放假(2或1等),備註(Description)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    // 簡易 CSV 逗號或引號切分
+                    const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                    if (cols.length >= 3) {
+                        let rawDate = cols[0]; // 例如 20260101 或 2026/01/01
+                        let isHoliday = cols[1]; // 是否放假 (通常 2 或 1 代表放假/不上班)
+                        let description = cols[2]; // 備註 (例如: 開國紀念日、農曆除夕、調整放假等)
+
+                        // 判斷是否為放假日 (依人事總處格式：isHoliday 為 2 或放假字眼)
+                        if (isHoliday === '2' || isHoliday === '1' || description.includes('放假') || description.includes('節') || description.includes('日') || description.includes('假')) {
+                            // 格式化日期為 YYYY-MM-DD
+                            let formattedDate = "";
+                            if (rawDate.length === 8 && !rawDate.includes('/')) {
+                                formattedDate = `${rawDate.substring(0,4)}-${rawDate.substring(4,6)}-${rawDate.substring(6,8)}`;
+                            } else if (rawDate.includes('/')) {
+                                let parts = rawDate.split('/');
+                                if (parts.length === 3) {
+                                    formattedDate = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+                                }
+                            }
+
+                            // 確保是有效日期且確實標記為放假 (如果未滿 8 碼或無法解析則跳過)
+                            if (formattedDate && formattedDate.length === 10) {
+                                // 如果是放假或調整放假，且備註不是上班日
+                                if (isHoliday === '2' && !description.includes('上班')) {
+                                    db.holidays[formattedDate] = description || "國定假日";
+                                    importedCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                document.getElementById('importCalendarFile').value = '';
+                saveToLocalStorage();
+                refreshAllUI();
+                alert(`成功匯入行政院行事曆！共自動篩選並載入了 ${importedCount} 天放假日設定。`);
+            } catch (err) {
+                console.error(err);
+                alert('解析行事曆檔案失敗，請確認檔案格式是否為標準政府行政機關辦公日曆表 CSV 檔。');
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
     }
 
     function clearAllData() {
