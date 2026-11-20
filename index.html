@@ -349,9 +349,27 @@
 
         .calendar-weekday {
             font-weight: 500;
-            font-size: 11px;
-            color: var(--text-muted);
-            padding-bottom: 3px;
+            font-size: 12px;
+            color: var(--text-main);
+            padding: 6px 2px;
+            background-color: #EFECE6;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+
+        .calendar-weekday:hover {
+            border-color: var(--text-main);
+            background-color: var(--selected-bg);
+        }
+
+        .calendar-weekday.active {
+            background-color: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+            font-weight: bold;
         }
 
         .calendar-day {
@@ -743,7 +761,7 @@
     <!-- 3. 批次預訂功能 -->
     <div id="tab-batch" class="panel">
         <h2>批次月曆預訂 / 取消</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊月曆選取日期（或使用快捷鍵全選平日，系統將自動略過設定中的國定假日），勾選學生，填寫備註後執行。</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">※ 操作說明：點擊上方星期表頭（如「一、二、四」）可一次選取或取消整個月該星期（自動略過假日），或直接點選單一日期；再勾選學生、填寫備註後執行。</p>
         
         <div class="calendar-container">
             <div class="calendar-header">
@@ -1606,6 +1624,42 @@
         saveToLocalStorage(); refreshAllUI();
     }
 
+    function getMonthDatesByWeekday(dayOfWeek, includeHolidays = false) {
+        const totalDays = new Date(batchCurrentYear, batchCurrentMonth + 1, 0).getDate();
+        const mStr = String(batchCurrentMonth + 1).padStart(2, '0');
+        const result = [];
+        for (let day = 1; day <= totalDays; day++) {
+            const dateObj = new Date(batchCurrentYear, batchCurrentMonth, day);
+            if (dateObj.getDay() === dayOfWeek) {
+                const dStr = String(day).padStart(2, '0');
+                const dateKeyStr = `${batchCurrentYear}-${mStr}-${dStr}`;
+                const isHoliday = db.holidays && db.holidays[dateKeyStr];
+                if (includeHolidays || !isHoliday) {
+                    result.push(dateKeyStr);
+                }
+            }
+        }
+        return result;
+    }
+
+    function toggleWeekdayColumn(dayOfWeek) {
+        const candidateDates = getMonthDatesByWeekday(dayOfWeek, false);
+        if (candidateDates.length === 0) return;
+
+        const allAlreadySelected = candidateDates.every(d => batchSelectedDates.includes(d));
+        if (allAlreadySelected) {
+            batchSelectedDates = batchSelectedDates.filter(d => !candidateDates.includes(d));
+        } else {
+            candidateDates.forEach(d => {
+                if (!batchSelectedDates.includes(d)) {
+                    batchSelectedDates.push(d);
+                }
+            });
+        }
+        renderBatchCalendar();
+        document.getElementById('selected-dates-count').innerText = `已選取：${batchSelectedDates.length} 個日期`;
+    }
+
     function renderBatchCalendar() {
         const grid = document.getElementById('batch-calendar-grid');
         const title = document.getElementById('calendar-month-title');
@@ -1613,7 +1667,18 @@
         const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
         title.innerText = `${batchCurrentYear} 年 ${monthNames[batchCurrentMonth]}`;
         const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-        weekdays.forEach(w => { const div = document.createElement('div'); div.className = 'calendar-weekday'; div.innerText = w; grid.appendChild(div); });
+        weekdays.forEach((w, dayIdx) => {
+            const div = document.createElement('div');
+            div.className = 'calendar-weekday';
+            div.title = `點擊一次選取/取消整月週${w}（略過假日）`;
+            const candidateDates = getMonthDatesByWeekday(dayIdx, false);
+            if (candidateDates.length > 0 && candidateDates.every(d => batchSelectedDates.includes(d))) {
+                div.classList.add('active');
+            }
+            div.innerText = w;
+            div.onclick = () => toggleWeekdayColumn(dayIdx);
+            grid.appendChild(div);
+        });
 
         const firstDayIndex = new Date(batchCurrentYear, batchCurrentMonth, 1).getDay();
         const totalDays = new Date(batchCurrentYear, batchCurrentMonth + 1, 0).getDate();
@@ -1640,6 +1705,7 @@
                 } else {
                     batchSelectedDates.push(dateKeyStr); dayDiv.classList.add('selected');
                 }
+                renderBatchCalendar();
                 document.getElementById('selected-dates-count').innerText = `已選取：${batchSelectedDates.length} 個日期`;
             };
             grid.appendChild(dayDiv);
@@ -1705,7 +1771,7 @@
 
     function applyFixedWeeklySelection() {
         if (batchSelectedDates.length === 0) {
-            alert('請先在上方月曆點選至少一個日期！');
+            alert('請先在上方月曆點選至少一個日期或星期！');
             return;
         }
 
