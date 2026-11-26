@@ -437,9 +437,11 @@
         }
 
         .bill-page {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-content: flex-start;
+            gap: 8px;
             background: #fff;
             padding: 10px;
             border: 1px solid var(--border-color);
@@ -450,7 +452,7 @@
             border: 1px solid #333;
             padding: 6px 8px;
             width: 100%;
-            height: 250px;
+            height: 245px;
             display: flex;
             box-sizing: border-box;
             background: #fff;
@@ -462,8 +464,8 @@
         }
 
         .bill-left {
-            width: 45%;
-            border-right: 1px dashed #999;
+            width: 44%;
+            border-right: 1px solid #999;
             padding-right: 6px;
             display: flex;
             flex-direction: column;
@@ -471,7 +473,7 @@
         }
 
         .bill-right {
-            width: 55%;
+            width: 56%;
             padding-left: 6px;
             display: flex;
             flex-direction: column;
@@ -490,22 +492,54 @@
         .bill-price-row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 11px; }
         .bill-total-row { border-top: 1px solid #000; padding-top: 3px; margin-top: 3px; font-size: 13px; font-weight: bold; text-align: right; }
 
-        .bill-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; margin-top: 3px; }
-        .bill-cal-day { border: 1px solid #ccc; font-size: 9px; height: 16px; line-height: 15px; background: #fff; }
-        .bill-cal-day.empty { border: none; background: transparent; }
-        .bill-cal-day.has-order { font-weight: bold; border: 1px solid #000; }
-        .bill-cal-day.price-75 { background-color: #D3D3D3 !important; }
-        .bill-cal-header-text { font-size: 9px; font-weight: bold; color: #555; }
+        /* 輕量化列印日曆表格（大幅減少手機列印向量負載） */
+        .bill-cal-table {
+            width: 100%;
+            min-width: 0 !important;
+            border-collapse: collapse;
+            table-layout: fixed;
+            text-align: center;
+            margin-top: 2px;
+        }
+        .bill-cal-table th {
+            padding: 1px 0;
+            font-size: 9px;
+            font-weight: bold;
+            color: #444;
+            background: transparent;
+            border: none;
+            text-align: center;
+        }
+        .bill-cal-table td {
+            padding: 0;
+            height: 15px;
+            line-height: 14px;
+            font-size: 9px;
+            border: none;
+            text-align: center;
+            color: #bbb;
+            background: transparent;
+        }
+        .bill-cal-table td.has-order {
+            color: #000;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+        .bill-cal-table td.price-75 {
+            background-color: #DCDCDC !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
         
         .bill-note-area {
             font-size: 9px;
-            color: #333;
+            color: #222;
             margin-top: 2px;
-            border-top: 1px dotted #ccc;
+            border-top: 1px solid #ccc;
             padding-top: 2px;
-            height: 32px;
+            height: 31px;
             overflow: hidden;
-            line-height: 1.25;
+            line-height: 1.22;
         }
 
         @media (max-width: 767px) {
@@ -528,8 +562,7 @@
             .calendar-header { flex-direction: row; justify-content: space-between; }
             .calendar-header > div { width: auto; }
             .calendar-header .btn-sm { flex: none; }
-            .bill-page { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .bill-card { max-width: none; margin: 0; }
+            .bill-card { width: 49%; max-width: none; margin: 0; }
         }
 
         body.force-desktop { padding: 30px 20px; }
@@ -545,8 +578,7 @@
         body.force-desktop .calendar-header { flex-direction: row; justify-content: space-between; }
         body.force-desktop .calendar-header > div { width: auto; }
         body.force-desktop .calendar-header .btn-sm { flex: none; }
-        body.force-desktop .bill-page { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        body.force-desktop .bill-card { max-width: none; margin: 0; }
+        body.force-desktop .bill-card { width: 49%; max-width: none; margin: 0; }
 
         body.force-mobile { padding: 15px 10px; }
         body.force-mobile header { flex-direction: column; justify-content: flex-start; align-items: stretch; }
@@ -561,25 +593,15 @@
         body.force-mobile .calendar-header { flex-direction: column; justify-content: center; }
         body.force-mobile .calendar-header > div { width: 100%; }
         body.force-mobile .calendar-header .btn-sm { flex: 1; }
-        body.force-mobile .bill-page { grid-template-columns: 1fr; gap: 12px; }
-        body.force-mobile .bill-card { max-width: 380px; margin: 0 auto; }
+        body.force-mobile .bill-card { width: 100%; max-width: 380px; margin: 0 auto; }
 
+        /* 專為手機 AirPrint 與電腦列印優化的輕量樣式 */
         @media print {
             html, body {
                 background: #fff !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
             }
             body > *:not(.container), 
             header, .nav-tabs, .panel:not(#tab-print-view), .print-actions, h2 {
@@ -597,61 +619,43 @@
                 border: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                background: transparent !important;
+                background: #fff !important;
+                box-shadow: none !important;
             }
-            
             .print-preview-container {
                 display: block !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
                 width: 100% !important;
             }
-
             .bill-page {
-                display: grid !important;
-                grid-template-columns: 96mm 96mm !important;
-                grid-template-rows: repeat(5, 52mm) !important;
-                gap: 2mm 4mm !important;
-                width: 196mm !important;
-                height: 268mm !important;
-                max-height: 268mm !important;
-                box-sizing: border-box !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: space-between !important;
+                align-content: flex-start !important;
+                width: 194mm !important;
                 margin: 0 auto !important;
                 padding: 0 !important;
                 border: none !important;
                 background: #fff !important;
-                overflow: hidden !important;
-                
-                page-break-after: always !important;
-                break-after: page !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+                break-after: page;
             }
-
             .bill-page:last-child {
-                page-break-after: auto !important;
-                break-after: auto !important;
+                break-after: auto;
             }
-
             .bill-card {
                 display: flex !important;
                 border: 1px solid #000 !important;
-                width: 96mm !important;
-                height: 52mm !important;
-                box-sizing: border-box !important;
-                padding: 5px 7px !important;
-                margin: 0 !important;
-                font-size: 10.5px !important;
+                width: 95mm !important;
+                max-width: 95mm !important;
+                height: 51mm !important;
+                padding: 4px 6px !important;
+                margin: 0 0 2.5mm 0 !important;
+                font-size: 10px !important;
                 background: #fff !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                overflow: hidden !important;
+                break-inside: avoid;
             }
-
             @page {
                 size: A4 portrait;
-                margin: 8mm 6mm 6mm 6mm;
+                margin: 8mm;
             }
         }
     </style>
@@ -2393,29 +2397,38 @@
             const rightDiv = document.createElement('div');
             rightDiv.className = 'bill-right';
             
-            let calGridHTML = '<div class="bill-cal-grid">';
-            ["日", "一", "二", "三", "四", "五", "六"].forEach(w => { calGridHTML += `<div class="bill-cal-header-text">${w}</div>`; });
+            // 輕量化表格日曆，減少大量獨立邊框向量負載
+            let calTableHTML = '<table class="bill-cal-table"><thead><tr>';
+            ["日", "一", "二", "三", "四", "五", "六"].forEach(w => { calTableHTML += `<th>${w}</th>`; });
+            calTableHTML += '</tr></thead><tbody><tr>';
 
             const firstDayIndex = new Date(year, monthIndex, 1).getDay();
             const totalDays = new Date(year, monthIndex + 1, 0).getDate();
+            let cellIndex = 0;
 
-            for (let i = 0; i < firstDayIndex; i++) { calGridHTML += '<div class="bill-cal-day empty"></div>'; }
+            for (let i = 0; i < firstDayIndex; i++) {
+                calTableHTML += '<td></td>';
+                cellIndex++;
+            }
             for (let day = 1; day <= totalDays; day++) {
+                if (cellIndex > 0 && cellIndex % 7 === 0) {
+                    calTableHTML += '</tr><tr>';
+                }
                 const dStr = String(day).padStart(2, '0');
                 const fullDateStr = `${targetMonth}-${dStr}`;
-                let dayClass = 'bill-cal-day';
-                let dayDisplay = day;
-
+                let tdClass = '';
                 if (orderedDatesThisMonth.includes(fullDateStr)) {
-                    dayClass += ' has-order';
-                    if(getPriceForDate(fullDateStr) === 75) dayClass += ' price-75';
-                } else {
-                    dayClass += ' empty';
-                    dayDisplay = `<span style="color:#ccc">${day}</span>`;
+                    tdClass = 'has-order';
+                    if (getPriceForDate(fullDateStr) === 75) tdClass += ' price-75';
                 }
-                calGridHTML += `<div class="${dayClass}">${dayDisplay}</div>`;
+                calTableHTML += `<td class="${tdClass}">${day}</td>`;
+                cellIndex++;
             }
-            calGridHTML += '</div>';
+            while (cellIndex % 7 !== 0) {
+                calTableHTML += '<td></td>';
+                cellIndex++;
+            }
+            calTableHTML += '</tr></tbody></table>';
 
             let addedParts = [];
             let canceledParts = [];
@@ -2462,7 +2475,7 @@
             rightDiv.innerHTML = `
                 <div>
                     <div style="font-weight:bold; font-size:10px; text-align:center;">${showMonth}月份訂餐日曆明細</div>
-                    ${calGridHTML}
+                    ${calTableHTML}
                 </div>
                 <div class="bill-note-area">${noteContent}</div>
             `;
