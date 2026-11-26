@@ -2421,19 +2421,38 @@
             let canceledParts = [];
             let lastSnap = lastMonthSnapshotMap[id];
             let lastSnapTimeMs = lastSnap ? (lastSnap.timeMs || 0) : 0;
+            let lastBilling = (db.monthlyBilling[lastMonthStr] && db.monthlyBilling[lastMonthStr][id])
+                ? db.monthlyBilling[lastMonthStr][id]
+                : null;
+            let isLastMonthPaid = !!(lastBilling && lastBilling.isPaid);
 
-            if (lastSnap && db.postPaymentChanges && db.postPaymentChanges[id]) {
+            if ((lastSnap || isLastMonthPaid) && db.postPaymentChanges && db.postPaymentChanges[id]) {
                 db.postPaymentChanges[id].forEach(change => {
                     if (change.dateStr.startsWith(lastMonthStr)) {
                         let changeTimeMs = change.timestamp || 0;
-                        if (changeTimeMs >= lastSnapTimeMs) {
+                        let isAfterOrNoSnap = lastSnap ? (changeTimeMs >= lastSnapTimeMs) : true;
+                        if (isAfterOrNoSnap) {
                             let dayStr = change.dateStr.substring(5).replace('-', '/');
                             let itemDesc = dayStr;
                             if (change.note && change.note.trim() !== "" && change.note.trim() !== "批次預訂" && change.note.trim() !== "個別手動調整") {
                                 itemDesc += `(${change.note.trim()})`;
                             }
-                            if (change.type === 'cancel') canceledParts.push(itemDesc);
-                            else addedParts.push(itemDesc);
+                            if (change.type === 'cancel') {
+                                if (!canceledParts.includes(itemDesc)) canceledParts.push(itemDesc);
+                            } else {
+                                if (!addedParts.includes(itemDesc)) addedParts.push(itemDesc);
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (db.canceledPaid && db.canceledPaid[id]) {
+                db.canceledPaid[id].forEach(dateStr => {
+                    if (dateStr.startsWith(lastMonthStr)) {
+                        let dayStr = dateStr.substring(5).replace('-', '/');
+                        if (!canceledParts.some(item => item === dayStr || item.startsWith(dayStr + '('))) {
+                            canceledParts.push(dayStr);
                         }
                     }
                 });
